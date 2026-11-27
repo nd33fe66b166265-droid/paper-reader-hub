@@ -59,6 +59,19 @@ const cardsOf = (rows) => rows.filter((r) => r.col === "data/users/me" && r.id.s
   ok(!t.$("openApp").hidden, "端末版で「保存」ボタンが出ない");
   ok(/ホーム画面に追加できます/.test(t.$("appNote").textContent), "ホーム画面への追加の知らせが出ない: " + t.$("appNote").textContent);
   ok(/この端末の中だけ/.test(t.$("sPrivNote").textContent), "設定の説明が端末版になっていない");
+  // 色のモード: 選ぶとすぐ変わり、上の帯の色（theme-color）も背景に合わせる。端末に覚える
+  ok(!t.$("sThemeRow").hidden, "端末版で色のモードの設定が出ない");
+  t.click(t.$("openSettings"));
+  ok(t.$("sTheme").value === "system", "色のモードの初めが「端末に合わせる」でない");
+  t.$("sTheme").value = "dark"; t.$("sTheme").dispatchEvent(new t.w.Event("change"));
+  const metas = () => [...t.w.document.querySelectorAll('meta[name="theme-color"]')].map((m) => (m.getAttribute("media") || "") + m.getAttribute("content"));
+  ok(t.w.document.documentElement.getAttribute("data-theme") === "dark" && t.w.localStorage.getItem("hub-theme") === "dark", "ダークを選んでも変わらない");
+  ok(JSON.stringify(metas()) === '["#131419"]', "ダークのときの theme-color: " + metas());
+  t.$("sTheme").value = "light"; t.$("sTheme").dispatchEvent(new t.w.Event("change"));
+  ok(t.w.document.documentElement.getAttribute("data-theme") === "light" && JSON.stringify(metas()) === '["#F3F4F7"]', "ライトのときの theme-color: " + metas());
+  t.$("sTheme").value = "system"; t.$("sTheme").dispatchEvent(new t.w.Event("change"));
+  ok(!t.w.document.documentElement.hasAttribute("data-theme"), "「端末に合わせる」で data-theme が残る");
+  t.w.document.getElementById("settings").open = false;
   t.$("tab-review").click();
   let rated = 0;
   for (let i = 0; i < 5; i++) {
@@ -150,6 +163,7 @@ const cardsOf = (rows) => rows.filter((r) => r.col === "data/users/me" && r.id.s
   const c = H.startHub({ fix, beforeParse(w) { w.eval(PWA_SRC); } });
   await delay(400);
   ok(c.$("openApp").hidden && !c.$("appNote").textContent, "claude.ai 版で「保存」や知らせが出る");
+  ok(c.$("sThemeRow").hidden, "claude.ai 版で色のモードの設定が出る");
   ok(/アカウント/.test(c.$("sPrivNote").textContent), "claude.ai 版の設定の説明が変わった");
   errs.push(...c.errs);
   c.w.close();
