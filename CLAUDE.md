@@ -39,7 +39,7 @@
 
 | 場所 | 中身 |
 |---|---|
-| `hub/index.html` | 現在の claude.ai 版ハブそのもの（Version 14、約 3,365 行。骨組み → CSS → HTML → 1つの IIFE）。ここから作り替える。段階1で `<script src="local-db.js">` を1行足した。段階2で `import.js` の読み込みと「教材」ダイアログ（`/* ==== Import` の節）を足した。段階3で `relay.js` の読み込みと、書くタブの「自分の Claude との往復」（`startRelay` / `renderRelay` / `readRelay`、待っている依頼は localStorage の `hub-wr-pending`）を足した。段階4で manifest・アイコンの `<link>`、`pwa.js` の読み込み、ヘッダーの「保存」ボタンと「保存とバックアップ」ダイアログ（`/* ==== App` の節）、今日の画面の知らせ（`#appNote`）を足した |
+| `hub/index.html` | 現在の claude.ai 版ハブそのもの（Version 14、約 3,365 行。骨組み → CSS → HTML → 1つの IIFE）。ここから作り替える。段階1で `<script src="local-db.js">` を1行足した。段階2で `import.js` の読み込みと「教材」ダイアログ（`/* ==== Import` の節）を足した。段階3で `relay.js` の読み込みと、書くタブの「自分の Claude との往復」（`startRelay` / `renderRelay` / `readRelay`、待っている依頼は localStorage の `hub-wr-pending`。頼む先は Claude・Gemini・ChatGPT から選べ、`hub-wr-ai` に覚える）を足した。段階4で manifest・アイコンの `<link>`、`pwa.js` の読み込み、ヘッダーの「保存」ボタンと「保存とバックアップ」ダイアログ（`/* ==== App` の節）、今日の画面の知らせ（`#appNote`）を足した |
 | `hub/local-db.js` | 段階1: `window.claude.use("db" \| "user" \| "sample")` と同じ使い方の部品を IndexedDB で作ったもの。本物の `window.claude` があるとき（claude.ai の中）は何もしない。`user.id()` は `"me"`、`sample` は `null`（端末版の添削は `relay.js` の往復を使う） |
 | `hub/import.js` | 段階2: 章のデータファイル（.txt）と全体図（.json）の組み立て・点検（`tools/build_unit.py` と `check_hub_data.py` を JS に移したもの。出力は Python 版と同じであることを t14 が確かめる）。画面はハブの「教材」ダイアログ（`IM`、`imCheck` / `imApply` / `renderImList`。端末保存のときだけ出す） |
 | `hub/relay.js` | 段階3: 書くタブの添削で、自分の Claude から貼り戻された返事を読み取る（`HubRelay.parseReply(text, "fix"\|"ja")`。コードブロック・前後の文を許し、崩れた返事はやさしい説明を返す）。t15 が確かめる |
