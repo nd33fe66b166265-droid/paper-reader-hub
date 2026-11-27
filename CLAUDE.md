@@ -35,7 +35,7 @@
 - 本文の HTML は必ず `sanitize()`、図は `sanitizeSvg()` を通す。取り込むファイルも外から来たものとして扱う。
 - API キーや秘密の値をコードに書かない（そもそも使わない設計）。
 
-## リポジトリの中身（段階5の時点）
+## リポジトリの中身（段階6の時点）
 
 | 場所 | 中身 |
 |---|---|
@@ -49,12 +49,13 @@
 | `hub/manifest.webmanifest`・`hub/icons/` | 段階4: ホーム画面のアプリの名前とアイコン（`tools/make_icons.py` で作る） |
 | `hub/samples/` | 「見本で試す」の章ファイルと全体図。**自作の英文**（論文の引用ではない） |
 | `.github/workflows/pages.yml` | push / PR でテスト、main なら `hub/` を GitHub Pages に公開 |
-| `tests/` | jsdom の自動テスト 27 本（`run_all.sh`。t12/t13 が端末保存の部品、t14 が教材の取り込み、t15 が書くタブの往復、t16 が PWA の部品と sw.js、t17 がバックアップの画面、t18 が2台の記録を合わせる）。`harness.js` の `makeDb` が `window.claude.use("db")` の偽物で、**端末保存の部品を作るときの手本になる** |
-| `tools/` | claude.ai 側で章を組み立てる Python（`build_unit.py`）と点検（`check_hub_data.py`）、全体図の見本（`ov_build_example.py`）。段階2で `hub/import.js` に移した（Python 版は比較用に残す） |
+| `tests/` | jsdom の自動テスト 28 本（`run_all.sh`。t12/t13 が端末保存の部品、t14 が教材の取り込み、t15 が書くタブの往復、t16 が PWA の部品と sw.js、t17 がバックアップの画面、t18 が2台の記録を合わせる、t19 が claude.ai からの移行）。`harness.js` の `makeDb` が `window.claude.use("db")` の偽物で、**端末保存の部品を作るときの手本になる** |
+| `tools/` | claude.ai 側で章を組み立てる Python（`build_unit.py`）と点検（`check_hub_data.py`）、全体図の見本（`ov_build_example.py`）。段階2で `hub/import.js` に移した（Python 版は比較用に残す）。段階6の `make_backup.py` は claude.ai のハブの写し（データベース＋同梱ファイル）からバックアップを作る（手順は `docs/migrate.md`、t19 が確かめる） |
 | `docs/hub-README.md` | 現在のハブの引き継ぎ資料（機能・データの形・コードの地図・守ること）。**4〜6節は必読** |
 | `docs/prompt-v7.md` | 現在の生成プロンプト（教材の作り方。章のデータファイルの書式は 5節） |
 | `docs/PLAN.md` | 作り替えの計画と段階 |
 | `docs/backup-format.md` | 段階4: バックアップのファイルの形（段階6の移行でも使う）。段階5の「合わせる」の決まり |
+| `docs/migrate.md` | 段階6: claude.ai のハブから教材と記録を移す手順と切り替え日の考え方 |
 
 ## テストの動かし方
 
@@ -62,10 +63,10 @@
 cd tests
 npm ci                                       # jsdom と fake-indexeddb
 python3 gen_fixtures.py
-HUB=$PWD/../hub/index.html sh run_all.sh    # 27本すべて OK（約90〜120秒）
+HUB=$PWD/../hub/index.html sh run_all.sh    # 28本すべて OK（約90〜120秒）
 ```
 
-2026-11-27 時点で、段階5の `hub/index.html` で 27 本すべて OK を確認済み（`HUB` を省くと `../hub/index.html` を使う）。
+2026-11-28 時点で、段階6の `hub/index.html` で 28 本すべて OK を確認済み（`HUB` を省くと `../hub/index.html` を使う）。
 `HUB` は絶対パスで渡す。機能を足したら、そのテストも足す（直す前の版で失敗することも確かめる）。
 
 ## 現在のハブが claude.ai に頼っている所（置き換える対象）
