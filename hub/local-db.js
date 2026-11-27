@@ -18,7 +18,7 @@
    読んだデータは凍結した写し（書き換えると TypeError）。claude.ai と同じで、ハブは {...元, 変える所} で写しを作る。
 
    user.id() は固定の "me"（ログインが無いので、この端末の利用者は1人）。
-   sample（添削で Claude を呼ぶ部品）は段階3で「コピー＆貼り付け」に置き換えるまで null（添削は使えない表示になる）。
+   sample（添削で Claude を呼ぶ部品）は null。端末版の添削は relay.js の「コピー＆貼り付け」の往復を使う（段階3）。
 
    保存の形: データベース "paper-reader-hub"、入れ物 "docs"、1件 = { col: コレクション, id, data }。
    ========================================================= */
@@ -154,7 +154,7 @@
       use: function (name) {
         if (name === "db") return getDb();
         if (name === "user") return Promise.resolve({ id: function () { return Promise.resolve("me"); } });
-        return Promise.resolve(null); // sample など: 段階3まで無し
+        return Promise.resolve(null); // sample など: 端末版では無し（添削は relay.js）
       },
     };
   }

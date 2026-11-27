@@ -35,16 +35,17 @@
 - 本文の HTML は必ず `sanitize()`、図は `sanitizeSvg()` を通す。取り込むファイルも外から来たものとして扱う。
 - API キーや秘密の値をコードに書かない（そもそも使わない設計）。
 
-## リポジトリの中身（段階2の時点）
+## リポジトリの中身（段階3の時点）
 
 | 場所 | 中身 |
 |---|---|
-| `hub/index.html` | 現在の claude.ai 版ハブそのもの（Version 14、約 3,365 行。骨組み → CSS → HTML → 1つの IIFE）。ここから作り替える。段階1で `<script src="local-db.js">` を1行足した。段階2で `import.js` の読み込みと「教材」ダイアログ（`/* ==== Import` の節）を足した |
-| `hub/local-db.js` | 段階1: `window.claude.use("db" \| "user" \| "sample")` と同じ使い方の部品を IndexedDB で作ったもの。本物の `window.claude` があるとき（claude.ai の中）は何もしない。`user.id()` は `"me"`、`sample` は段階3まで `null` |
+| `hub/index.html` | 現在の claude.ai 版ハブそのもの（Version 14、約 3,365 行。骨組み → CSS → HTML → 1つの IIFE）。ここから作り替える。段階1で `<script src="local-db.js">` を1行足した。段階2で `import.js` の読み込みと「教材」ダイアログ（`/* ==== Import` の節）を足した。段階3で `relay.js` の読み込みと、書くタブの「自分の Claude との往復」（`startRelay` / `renderRelay` / `readRelay`、待っている依頼は localStorage の `hub-wr-pending`）を足した |
+| `hub/local-db.js` | 段階1: `window.claude.use("db" \| "user" \| "sample")` と同じ使い方の部品を IndexedDB で作ったもの。本物の `window.claude` があるとき（claude.ai の中）は何もしない。`user.id()` は `"me"`、`sample` は `null`（端末版の添削は `relay.js` の往復を使う） |
 | `hub/import.js` | 段階2: 章のデータファイル（.txt）と全体図（.json）の組み立て・点検（`tools/build_unit.py` と `check_hub_data.py` を JS に移したもの。出力は Python 版と同じであることを t14 が確かめる）。画面はハブの「教材」ダイアログ（`IM`、`imCheck` / `imApply` / `renderImList`。端末保存のときだけ出す） |
+| `hub/relay.js` | 段階3: 書くタブの添削で、自分の Claude から貼り戻された返事を読み取る（`HubRelay.parseReply(text, "fix"\|"ja")`。コードブロック・前後の文を許し、崩れた返事はやさしい説明を返す）。t15 が確かめる |
 | `hub/samples/` | 「見本で試す」の章ファイルと全体図。**自作の英文**（論文の引用ではない） |
 | `.github/workflows/pages.yml` | push / PR でテスト、main なら `hub/` を GitHub Pages に公開 |
-| `tests/` | jsdom の自動テスト 23 本（`run_all.sh`。t12/t13 が端末保存の部品、t14 が教材の取り込み）。`harness.js` の `makeDb` が `window.claude.use("db")` の偽物で、**端末保存の部品を作るときの手本になる** |
+| `tests/` | jsdom の自動テスト 24 本（`run_all.sh`。t12/t13 が端末保存の部品、t14 が教材の取り込み、t15 が書くタブの往復）。`harness.js` の `makeDb` が `window.claude.use("db")` の偽物で、**端末保存の部品を作るときの手本になる** |
 | `tools/` | claude.ai 側で章を組み立てる Python（`build_unit.py`）と点検（`check_hub_data.py`）、全体図の見本（`ov_build_example.py`）。段階2で `hub/import.js` に移した（Python 版は比較用に残す） |
 | `docs/hub-README.md` | 現在のハブの引き継ぎ資料（機能・データの形・コードの地図・守ること）。**4〜6節は必読** |
 | `docs/prompt-v7.md` | 現在の生成プロンプト（教材の作り方。章のデータファイルの書式は 5節） |
@@ -56,10 +57,10 @@
 cd tests
 npm ci                                       # jsdom と fake-indexeddb
 python3 gen_fixtures.py
-HUB=$PWD/../hub/index.html sh run_all.sh    # 23本すべて OK（約80〜100秒）
+HUB=$PWD/../hub/index.html sh run_all.sh    # 24本すべて OK（約90〜110秒）
 ```
 
-2026-11-27 時点で、段階2の `hub/index.html` で 23 本すべて OK を確認済み（`HUB` を省くと `../hub/index.html` を使う）。
+2026-11-27 時点で、段階3の `hub/index.html` で 24 本すべて OK を確認済み（`HUB` を省くと `../hub/index.html` を使う）。
 `HUB` は絶対パスで渡す。機能を足したら、そのテストも足す（直す前の版で失敗することも確かめる）。
 
 ## 現在のハブが claude.ai に頼っている所（置き換える対象）
@@ -70,7 +71,7 @@ HUB=$PWD/../hub/index.html sh run_all.sh    # 23本すべて OK（約80〜100秒
   コレクションは `sources` `units` `texts` `overviews`（教材）と `data/users/<uid>/`（記録: `meta` `srs-0..7` `time-YYYY-MM` `log-YYYY-MM` `sum-YYYY-MM` `fixes` `progress` `archive`）。
   形は `docs/hub-README.md` の 5節。
 - **user**: `id()` だけ。端末版では固定の ID でよい。
-- **sample**: 書くタブの添削（`json(prompt)`）。段階3でコピー＆貼り付けに置き換える。
+- **sample**: 書くタブの添削（`json(prompt)`）。端末版では使わず、段階3の「依頼文をコピー → 返事を貼り戻す」（`relay.js`）に置き換えた。claude.ai の中では今までどおり `sample` を使う。
 - `fetch("content/…")`: ファイルで届く教材。端末版では使わない（無ければデータベースだけで動くことは `t11 nofile` で確認済み）。
 
 方針: **`window.claude.use` と同じ使い方の部品を IndexedDB で作って差し込み、ハブ本体の変更を最小にする**（段階1）。
