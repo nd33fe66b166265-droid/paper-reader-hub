@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" media="(prefers-color-scheme: light)" content="#F3F4F7"><meta name="theme-color" media="(prefers-color-scheme: dark)" content="#131419"><link rel="icon" href="icons/favicon-32.png" sizes="32x32"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="論文ハブ"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" media="(prefers-color-scheme: light)" content="#F3F4F7"><meta name="theme-color" media="(prefers-color-scheme: dark)" content="#131419"><script>/* 色のモード（端末版の設定。hub-theme）を、描く前に当てる */try{var t=localStorage.getItem("hub-theme");if(!window.claude&&(t==="light"||t==="dark"))document.documentElement.setAttribute("data-theme",t)}catch(e){}</script><link rel="icon" href="icons/favicon-32.png" sizes="32x32"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="論文ハブ"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>論文リーダー学習ハブ</title>
 <meta name="description" content="論文リーダーで出てきた単語と熟語・定型文の間隔反復、原文の音読・シャドーイング、要約の添削と学習時間の記録">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -954,6 +954,14 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
     </label>
     <label>添削カードを1日に追加できる数
       <input class="field" id="sFix" type="number" min="0" max="20" step="1">
+    </label>
+    <label id="sThemeRow" hidden>色のモード
+      <select class="field" id="sTheme">
+        <option value="system">端末の設定に合わせる</option>
+        <option value="light">ライト</option>
+        <option value="dark">ダーク</option>
+      </select>
+      <span class="note">選ぶとすぐに変わります。端末ごとに保存されます。</span>
     </label>
     <label>読み上げの声
       <select class="field" id="sVoice"></select>
@@ -3478,6 +3486,7 @@ $("openSettings").addEventListener("click", () => {
   $("sCap").value = m.dailyMin || 60; $("sFix").value = m.fixPerDay != null ? m.fixPerDay : 3;
   $("sPhr").value = m.phrPerDay != null ? m.phrPerDay : 5;
   $("sRev").value = m.revPerDay != null ? m.revPerDay : 40;
+  $("sTheme").value = themePref();
   loadVoices();
   try { $("settings").showModal(); } catch (e) { $("settings").setAttribute("open", ""); }
 });
@@ -3916,8 +3925,23 @@ $("appNote").addEventListener("click", (e) => {
   const l = e.target.closest("[data-ap-later]");
   if (l) { lsSet(l.dataset.apLater, String(Date.now())); renderAppNote(); }
 });
+/* ---------- 色のモード（端末版だけ。hub-theme = system | light | dark） ----------
+   CSS は :root[data-theme] で色を切り替える。スマホの上の帯（theme-color）も、いまの背景色に合わせる */
+function themePref() { const v = lsGet("hub-theme", "system"); return v === "light" || v === "dark" ? v : "system"; }
+function applyTheme() {
+  const v = themePref(), root = document.documentElement;
+  if (v === "system") root.removeAttribute("data-theme"); else root.setAttribute("data-theme", v);
+  const bg = (getComputedStyle(root).getPropertyValue("--bg") || "").trim();
+  if (!bg) return;
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m, i) => {
+    if (i === 0) { m.removeAttribute("media"); m.setAttribute("content", bg); } else m.remove();
+  });
+}
+$("sTheme").addEventListener("change", () => { lsSet("hub-theme", $("sTheme").value); applyTheme(); });
 function apInit() {
   AP.on = true; $("openApp").hidden = false;
+  $("sThemeRow").hidden = false; applyTheme();
+  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (themePref() === "system") applyTheme(); }); } catch (e) { /* 古いブラウザ */ }
   $("sPrivNote").textContent = "教材と学習の記録はこの端末の中だけに保存され、どこにも送られません。端末を替えるときは「保存」からバックアップを書き出してください。";
   HubPWA.onUpdate(() => { AP.update = true; renderAppNote(); });
   HubPWA.onInstallChange(() => { renderAppNote(); if ($("appDlg").open) renderApp(); });
