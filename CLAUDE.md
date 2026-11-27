@@ -35,12 +35,14 @@
 - 本文の HTML は必ず `sanitize()`、図は `sanitizeSvg()` を通す。取り込むファイルも外から来たものとして扱う。
 - API キーや秘密の値をコードに書かない（そもそも使わない設計）。
 
-## リポジトリの中身（段階0の時点）
+## リポジトリの中身（段階1の時点）
 
 | 場所 | 中身 |
 |---|---|
-| `hub/index.html` | 現在の claude.ai 版ハブそのもの（Version 14、約 3,365 行。骨組み → CSS → HTML → 1つの IIFE）。ここから作り替える |
-| `tests/` | jsdom の自動テスト 19 本（`run_all.sh`）。`harness.js` の `makeDb` が `window.claude.use("db")` の偽物で、**端末保存の部品を作るときの手本になる** |
+| `hub/index.html` | 現在の claude.ai 版ハブそのもの（Version 14、約 3,365 行。骨組み → CSS → HTML → 1つの IIFE）。ここから作り替える。段階1で `<script src="local-db.js">` を1行足した |
+| `hub/local-db.js` | 段階1: `window.claude.use("db" \| "user" \| "sample")` と同じ使い方の部品を IndexedDB で作ったもの。本物の `window.claude` があるとき（claude.ai の中）は何もしない。`user.id()` は `"me"`、`sample` は段階3まで `null` |
+| `.github/workflows/pages.yml` | push / PR でテスト、main なら `hub/` を GitHub Pages に公開 |
+| `tests/` | jsdom の自動テスト 22 本（`run_all.sh`。t12/t13 が端末保存の部品）。`harness.js` の `makeDb` が `window.claude.use("db")` の偽物で、**端末保存の部品を作るときの手本になる** |
 | `tools/` | claude.ai 側で章を組み立てる Python（`build_unit.py`）と点検（`check_hub_data.py`）、全体図の見本（`ov_build_example.py`）。段階2で JavaScript に移す |
 | `docs/hub-README.md` | 現在のハブの引き継ぎ資料（機能・データの形・コードの地図・守ること）。**4〜6節は必読** |
 | `docs/prompt-v7.md` | 現在の生成プロンプト（教材の作り方。章のデータファイルの書式は 5節） |
@@ -50,12 +52,12 @@
 
 ```sh
 cd tests
-npm i jsdom@24
+npm ci                                       # jsdom と fake-indexeddb
 python3 gen_fixtures.py
-HUB=$PWD/../hub/index.html sh run_all.sh    # 19本すべて OK（約90秒）
+HUB=$PWD/../hub/index.html sh run_all.sh    # 22本すべて OK（約70〜90秒）
 ```
 
-2026-11-27 時点で、`hub/index.html`（sha256 988240db…）で 19 本すべて OK を確認済み。
+2026-11-27 時点で、段階1の `hub/index.html` で 22 本すべて OK を確認済み（`HUB` を省くと `../hub/index.html` を使う）。
 `HUB` は絶対パスで渡す。機能を足したら、そのテストも足す（直す前の版で失敗することも確かめる）。
 
 ## 現在のハブが claude.ai に頼っている所（置き換える対象）

@@ -16,7 +16,7 @@
 //   const t = H.startHub({ fix, user: new Map(), scrollModel: false });
 //   await t.delay(400); t.ok(cond, "msg"); ... ; t.finish({ extra });
 //
-// 環境変数 HUB で HTML の場所を変えられる（既定: ../hub.html → 無ければ ./hub.html）。
+// 環境変数 HUB で HTML の場所を変えられる（既定: ../hub.html → ../hub/index.html → ./hub.html）。
 "use strict";
 const { JSDOM } = require("jsdom");
 const fs = require("fs"), path = require("path");
@@ -45,7 +45,9 @@ function loadFixtures(dir = path.join(__dirname, "fixtures")) {
 function hubPath() {
   if (process.env.HUB) return path.resolve(process.env.HUB);
   const a = path.resolve(__dirname, "..", "hub.html");
-  return fs.existsSync(a) ? a : path.resolve(__dirname, "hub.html");
+  if (fs.existsSync(a)) return a;
+  const b = path.resolve(__dirname, "..", "hub", "index.html"); // このリポジトリの置き場所
+  return fs.existsSync(b) ? b : path.resolve(__dirname, "hub.html");
 }
 
 /* ---------- 偽のデータベース ----------
