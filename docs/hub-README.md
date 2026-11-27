@@ -168,6 +168,7 @@
 | READING | `rdMode`, `fillUnitSelect`, `renderReadTab`, `renderRead`, `renderRdHead`, `setPanel`/`syncRdBar`（開閉）, `showTip`/`placeTip`/`hideTip`/`lookupRd`（`placeTip(el, html)` は学習の記録のツールチップと共通。要素 `#rdTip` を使い回す）, `rdTrack`/`saveProgress`/`restoreRead`（続きから）, `loadOverview`/`sanitizeSvg`/`renderOverview`/`ovJump` |
 | STUDY TIME | `bucketNow`, `idleLimit`（読む5分・他2分で停止。再生中は止めない）, `tick`（1秒ごと）, `saveTime`, `dayAuto`/`dayTotals`, `renderTime`（今日の分）, 手入力の記録。学習の記録: `renderChart`（`tmView` = `week`/`month` で振り分け）, `renderWeek`（`tmWeekOff`、月曜始まり `weekStart`、カテゴリ別の積み上げ）, `renderMonth`（`tmMonOff`、`ringSvg`：1周 `RING_MIN`=60分、満たした周を下に敷き今の周を上に重ねる。色は `--ring-1/2/3`）, `firstRecDay`（さかのぼれる範囲）, `tmTipHtml`（ツールチップの中身。数字と決まった語だけ）。日付の計算は `dateOf`/`keyOfDate`/`addDays`（正午を基準にして日付ずれを防ぐ） |
 | WRITING | `unitText`, `buildPrompt`（`corrected_ja` も頼む）, `buildJaPrompt`（古い結果の訳だけ作る）, `normalizeRes`, `renderWrite`, `renderWrResult`, `toggleWrJa`（訳の開閉。`WR.jaOpen` は初期 閉・別の結果を開くと閉、`WR.jaBusy` は作成中）, `addCards`, `renderWrHist` |
+| Import（PWA 版の段階2） | 端末保存のときだけ出す「教材」ダイアログ。`IM`（状態）, `imContext`（いまの units/sources/overviews をデータベースから読む）, `imCheck`（`HubImport.analyze` で組み立て・点検）, `renderImResult`, `imApply`（書く前に点検し直し、sources → overviews → texts → units の順に set）, `imForget`（読み込み済みの本文・全体図を捨てる）, `renderImList`（一覧と削除。最後の章を消すと資料と全体図も消す）。組み立てと点検そのものは `hub/import.js` |
 | Settings / Boot | 設定ダイアログ, `rerenderAll`, `subscribeUnits`, `afterUnits`, `boot` |
 
 **守ること**
