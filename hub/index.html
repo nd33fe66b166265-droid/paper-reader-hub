@@ -569,6 +569,15 @@ dialog::backdrop { background: rgba(10,12,20,.4); }
 .wr-acts { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .wr-acts .hint { font-size: .8rem; color: var(--ink-3); }
 .wr-res { margin-top: 16px; display: grid; gap: 16px; }
+/* 自分の Claude との往復（端末版の添削） */
+.relay { display: grid; gap: 12px; padding: 14px 16px; border: 1px solid var(--rule); border-radius: 10px; background: var(--bg); }
+.relay[hidden] { display: none; }
+.relay ol { margin: 0; padding-left: 1.4em; display: grid; gap: 12px; }
+.relay li { font-size: .9rem; }
+.relay li > .wr-acts { margin-top: 6px; }
+.relay .area { font-size: .82rem; }
+.relay-err { color: var(--rose); font-size: .86rem; overflow-wrap: anywhere; }
+.relay-err:empty { display: none; }
 .wr-res p { margin: 0; }
 .wr-en { font-family: var(--serif); font-size: 1.08rem; line-height: 1.8; overflow-wrap: anywhere; min-width: 0; }
 .wr-block { display: grid; gap: 6px; }
@@ -863,6 +872,7 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
         <button class="btn" type="button" id="wrStop" hidden>やめる</button>
         <span class="hint" id="wrHint">Claudeが英語の間違いを直し、理由を説明します。</span>
       </div>
+      <div class="relay" id="wrRelay" hidden></div>
     </div>
     <div id="wrResult"></div>
     <h2 class="sec-title">これまでの要約</h2>
@@ -961,6 +971,8 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
 <script src="local-db.js"></script>
 <!-- 教材の取り込み（章のデータファイルの組み立てと点検） -->
 <script src="import.js"></script>
+<!-- 書くタブの添削: 自分の Claude との「コピー＆貼り付け」で返事を読み取る -->
+<script src="relay.js"></script>
 <script>
 /* =========================================================
    論文リーダー学習ハブ — コードの地図（引き継ぎ用）
@@ -1000,7 +1012,7 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
      READING    … 読む画面（rdMode read/shadow）、開閉、ツールチップ、全体図（renderOverview, sanitizeSvg）、続きから読む（progress）
      STUDY TIME … 自動計測（tick 1秒、無操作で停止: 読む5分・他2分）、手入力の記録、
                   学習の記録（tmView week/month: renderWeek=月曜始まりの棒グラフ、renderMonth=1周60分のリング、tmTipHtml/placeTip）
-     WRITING    … 要約と添削（sample.json）、直した英文の訳（res.correctedJa。無い古い結果は toggleWrJa で作る）、添削カード（fixes）
+     WRITING    … 要約と添削（sample.json。端末版は自分の Claude との往復: startRelay / renderRelay / readRelay と relay.js）、直した英文の訳（res.correctedJa。無い古い結果は toggleWrJa で作る）、添削カード（fixes）
      Settings / Boot … 設定ダイアログ、boot（sources と自分の記録を並行で読む → subscribeUnits）
    localStorage（この端末だけの表示設定）: hub-tab, hub-sh-unit, hub-rd-mode, hub-rd-terms, hub-rd-ov,
      hub-arch-open, hub-w-mode, hub-wr-unit, hub-wr-draft-<unit>, hub-voice, hub-repeat, hub-sh-loop, hub-sh-mode, hub-sh-text, hub-tm-view, hub-dev
@@ -3034,7 +3046,7 @@ $("lgToday").addEventListener("click", (ev) => {
    WRITING（要約と添削）
    ========================================================= */
 let wrUnitId = lsGet("hub-wr-unit", "");
-const WR = { busy: false, ctl: null, cur: null, redo: false, redoDraft: "", sampleOk: true, picked: {}, pickedFor: null, draftFor: null, jaOpen: false, jaBusy: null };
+const WR = { busy: false, ctl: null, cur: null, redo: false, redoDraft: "", sampleOk: true, picked: {}, pickedFor: null, draftFor: null, jaOpen: false, jaBusy: null, relay: false, pend: null };
 const LV = { meaning: ["重要", "rose"], grammar: ["文法", "ochre"], style: ["自然さ", "muted"] };
 function unitText(u, maxLen) {
   let s = "";
@@ -3119,6 +3131,7 @@ function renderWrite() {
   $("wrLink").innerHTML = u && u.url ? `<a class="link" href="${esc(u.url)}" target="_blank" rel="noopener" style="font-size:.82rem;white-space:nowrap">リーダー↗</a>` : "";
   if (WR.draftFor !== wrUnitId) loadDraft();
   updateWrCount();
+  if (WR.relay) renderRelay();
   $("wrNote").innerHTML = WR.sampleOk ? "" : `<div class="notice" style="margin-bottom:12px"><b>このページからClaudeを呼べない状態です。</b> 要約は書けますが、添削はできません。ページの権限でClaudeの利用を許可すると使えるようになります。</div>`;
   renderWrResult(); renderWrHist();
 }
@@ -3141,6 +3154,13 @@ $("wrStop").addEventListener("click", () => { if (WR.ctl) WR.ctl.abort(); });
 $("wrCheck").addEventListener("click", async () => {
   const text = $("wrText").value.trim(); if (!text || WR.busy) return;
   const u = unitById(wrUnitId), ja = $("wrJa").value.trim();
+  if (WR.relay) { // 端末版: 依頼文を作って、自分の Claude との往復を始める
+    WR.busy = true; updateWrCount();
+    try { if (u) await loadText(u.id); } catch (e) { /* 本文が無くても依頼文は作れる */ }
+    WR.busy = false; updateWrCount();
+    startRelay({ kind: "fix", unit: u ? u.id : "", unitLabel: u ? u.label : "", text, ja, prompt: buildPrompt(u, text, ja) });
+    return;
+  }
   WR.busy = true; updateWrCount();
   $("wrHint").textContent = "添削しています…（20〜40秒ほどかかることがあります）";
   const sample = S.samplePromise ? await S.samplePromise : null;
@@ -3151,14 +3171,7 @@ $("wrCheck").addEventListener("click", async () => {
     const res = await sample.json(buildPrompt(u, text, ja), { modelTier: "default", signal: WR.ctl.signal });
     const r = normalizeRes(res);
     if (!r.corrected && !r.items.length) throw { code: "invalid_json" };
-    const id = Date.now().toString(36);
-    const entry = { day: dayKey(), at: Date.now(), unit: u ? u.id : "", unitLabel: u ? u.label : "", text, ja, res: r, rewrite: "" };
-    S.sums[id] = entry; WR.cur = id; WR.redo = false; WR.jaOpen = false;
-    mergeDoc("sum-" + entry.day.slice(0, 7), { items: { [id]: entry } }, "要約を保存できませんでした。通信状態を確認してください。");
-    $("wrText").value = ""; $("wrJa").value = ""; lsSet("hub-wr-draft-" + wrUnitId, "{}");
-    $("wrHint").textContent = "添削しました。結果は下にあります。";
-    renderWrResult(); renderWrHist();
-    $("wrResult").scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    saveWrResult(u ? u.id : "", u ? u.label : "", text, ja, r);
   } catch (e) {
     const code = e && e.code;
     if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(code)) {
@@ -3178,6 +3191,98 @@ $("wrCheck").addEventListener("click", async () => {
     WR.busy = false; WR.ctl = null; $("wrStop").hidden = true; updateWrCount();
   }
 });
+// 添削の結果を要約の記録として保存し、結果を開く（Claude を直接呼んだときと、返事を貼り戻したときで共通）
+function saveWrResult(unit, unitLabel, text, ja, r) {
+  const id = Date.now().toString(36);
+  const entry = { day: dayKey(), at: Date.now(), unit, unitLabel, text, ja, res: r, rewrite: "" };
+  S.sums[id] = entry; WR.cur = id; WR.redo = false; WR.jaOpen = false;
+  mergeDoc("sum-" + entry.day.slice(0, 7), { items: { [id]: entry } }, "要約を保存できませんでした。通信状態を確認してください。");
+  // 書き欄が送った要約のままなら空にする（往復のあいだに書き直していたら残す）
+  if ($("wrText").value.trim() === text && wrUnitId === unit) { $("wrText").value = ""; $("wrJa").value = ""; lsSet("hub-wr-draft-" + wrUnitId, "{}"); updateWrCount(); }
+  if (wrUnitId !== unit) lsSet("hub-wr-draft-" + unit, "{}");
+  $("wrHint").textContent = "添削しました。結果は下にあります。";
+  renderWrResult(); renderWrHist();
+  $("wrResult").scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+}
+// 直した英文の訳を保存する（読んだ記録は書き換えられないので写しにする）
+function saveWrJa(id, ja) {
+  const e = S.sums[id]; if (!e) return;
+  S.sums[id] = { ...e, res: { ...e.res, correctedJa: ja } };
+  mergeDoc("sum-" + e.day.slice(0, 7), { items: { [id]: { res: { correctedJa: ja } } } }, "訳を保存できませんでした。");
+  if (WR.cur === id) WR.jaOpen = true;
+}
+
+/* ---------- 自分の Claude との往復（端末版。API を使わない） ----------
+   1. 依頼文をコピー → 2. 自分の Claude に貼って送る → 3. 返事を貼り戻す（HubRelay.parseReply で読み取る）
+   往復のあいだにアプリが閉じられても続きからできるよう、待っている依頼は localStorage に置く。
+   WR.pend = { kind: "fix"|"ja", unit, unitLabel, text, ja, prompt, sum（訳のときの要約ID）, at } */
+const RELAY_KEY = "hub-wr-pending";
+function loadRelay() {
+  try { const p = JSON.parse(lsGet(RELAY_KEY, "null")); if (p && typeof p === "object" && typeof p.prompt === "string" && (p.kind === "fix" || p.kind === "ja")) return p; } catch (e) {}
+  return null;
+}
+function startRelay(p) {
+  WR.pend = { ...p, at: Date.now() }; lsSet(RELAY_KEY, JSON.stringify(WR.pend));
+  WR.relayErr = ""; WR.relayCopied = false; WR.relayReply = "";
+  renderRelay();
+  const box = $("wrRelay"); box.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  const b = $("wrRelayCopy"); if (b) b.focus();
+}
+function endRelay() { WR.pend = null; WR.relayErr = ""; WR.relayReply = ""; lsSet(RELAY_KEY, "null"); renderRelay(); }
+function renderRelay() {
+  const box = $("wrRelay"), p = WR.pend;
+  if (!p) { box.hidden = true; box.innerHTML = ""; return; }
+  const what = p.kind === "ja" ? "直した英文の訳" : "添削";
+  box.hidden = false;
+  box.innerHTML = `<div class="wr-head"><span class="due-label">${esc(what)}を自分の Claude に頼む · ${esc(p.unitLabel || "")}</span><button class="textbtn muted" type="button" id="wrRelayCancel">やめる</button></div>
+    <ol>
+      <li>依頼文をコピーします。
+        <div class="wr-acts"><button class="btn primary" type="button" id="wrRelayCopy">依頼文をコピー</button><span class="hint" id="wrRelayCopied" role="status">${WR.relayCopied ? "コピーしました" : ""}</span></div>
+        <details style="margin-top:6px"><summary style="font-size:.82rem;color:var(--ink-3);cursor:pointer">依頼文を見る（コピーできないときは、ここから選んでコピー）</summary>
+          <textarea class="area" id="wrRelayPrompt" rows="6" readonly></textarea></details></li>
+      <li>自分の Claude（アプリや claude.ai）で新しいチャットを開き、貼り付けて送ります。
+        <div class="wr-acts"><a class="link" href="https://claude.ai/new" target="_blank" rel="noopener">Claude を開く↗</a></div></li>
+      <li>Claude の返事を<b>全部</b>コピーして、ここに貼ります（返事の下のコピーボタンを使うと確実です）。
+        <textarea class="area" id="wrRelayReply" rows="5" spellcheck="false" placeholder='{"overall": "…", "corrected": "…", …}'></textarea>
+        <div class="relay-err" id="wrRelayErr" role="alert">${esc(WR.relayErr || "")}</div>
+        <div class="wr-acts"><button class="btn primary" type="button" id="wrRelayRead">返事を読み込む</button></div></li>
+    </ol>`;
+  $("wrRelayPrompt").value = p.prompt; // 依頼文と返事は文字としてだけ入れる（HTML を解釈しない）
+  $("wrRelayReply").value = WR.relayReply || "";
+}
+async function copyRelay() {
+  const p = WR.pend; if (!p) return;
+  let done = false;
+  try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(p.prompt); done = true; } } catch (e) {}
+  if (!done) { // 古いブラウザ: 依頼文の欄を選んでコピーする
+    const d = $("wrRelayPrompt").closest("details"); if (d) d.open = true;
+    const ta = $("wrRelayPrompt"); ta.focus(); ta.select();
+    try { done = document.execCommand && document.execCommand("copy"); } catch (e) {}
+  }
+  WR.relayCopied = done;
+  $("wrRelayCopied").textContent = done ? "コピーしました" : "コピーできませんでした。下の「依頼文を見る」から選んでコピーしてください。";
+}
+function readRelay() {
+  const p = WR.pend; if (!p) return;
+  WR.relayReply = $("wrRelayReply").value;
+  const r = window.HubRelay ? window.HubRelay.parseReply(WR.relayReply, p.kind) : { ok: false, msg: "返事を読み取る部品を読み込めませんでした。ページを開き直してください。" };
+  if (!r.ok) { WR.relayErr = r.msg; $("wrRelayErr").textContent = r.msg; return; }
+  if (p.kind === "ja") {
+    if (!S.sums[p.sum]) { WR.relayErr = "訳を付ける要約が見つかりません。"; $("wrRelayErr").textContent = WR.relayErr; return; }
+    endRelay(); saveWrJa(p.sum, String(r.data.ja).trim()); if (WR.cur !== p.sum) WR.cur = p.sum;
+    toast("訳を保存しました。"); renderWrResult(); return;
+  }
+  const res = normalizeRes(r.data);
+  endRelay(); saveWrResult(p.unit, p.unitLabel, p.text, p.ja, res);
+}
+$("wrRelay").addEventListener("click", (ev) => {
+  const t = ev.target;
+  if (t.closest("#wrRelayCopy")) { copyRelay(); return; }
+  if (t.closest("#wrRelayRead")) { readRelay(); return; }
+  if (t.closest("#wrRelayCancel")) { endRelay(); $("wrHint").textContent = "依頼をやめました。"; return; }
+});
+$("wrRelay").addEventListener("input", (ev) => { if (ev.target.id === "wrRelayReply") { WR.relayReply = ev.target.value; if (WR.relayErr) { WR.relayErr = ""; $("wrRelayErr").textContent = ""; } } });
+
 function fixLeft() { const m = meta(); return Math.max(0, (m.fixPerDay | 0) - (m.fixAdded | 0)); }
 function renderWrResult() {
   const box = $("wrResult"), e = WR.cur && S.sums[WR.cur];
@@ -3223,6 +3328,7 @@ async function toggleWrJa() {
   const id = WR.cur, e = id && S.sums[id]; if (!e || !e.res || !e.res.corrected || WR.jaBusy) return;
   if (WR.jaOpen && e.res.correctedJa) { WR.jaOpen = false; renderWrResult(); return; }
   if (e.res.correctedJa) { WR.jaOpen = true; renderWrResult(); return; }
+  if (WR.relay) { startRelay({ kind: "ja", sum: id, unit: e.unit, unitLabel: e.unitLabel, text: "", ja: "", prompt: buildJaPrompt(e.res.corrected) }); return; }
   const sample = S.samplePromise ? await S.samplePromise : null;
   if (!sample) { toast("今はClaudeを呼べないため、訳を作れません。"); return; }
   WR.jaBusy = id; renderWrResult();
@@ -3230,9 +3336,7 @@ async function toggleWrJa() {
     const r = await sample.json(buildJaPrompt(e.res.corrected), { modelTier: "default" });
     const ja = String((r && r.ja) || "").trim();
     if (!ja) throw { code: "empty_completion" };
-    S.sums[id] = { ...S.sums[id], res: { ...S.sums[id].res, correctedJa: ja } }; // 読んだ記録は書き換えられないので写しにする
-    mergeDoc("sum-" + e.day.slice(0, 7), { items: { [id]: { res: { correctedJa: ja } } } }, "訳を保存できませんでした。");
-    if (WR.cur === id) WR.jaOpen = true;
+    saveWrJa(id, ja);
   } catch (err) {
     toast((err && err.code) === "rate_limited" ? "利用が集中しています。少し時間をおいてもう一度押してください。" : "訳を作れませんでした。もう一度押してください。");
   } finally {
@@ -3559,7 +3663,8 @@ async function boot() {
   const fileReady = loadFileIndex(); // ファイルで届く教材の目次（データベースと並行で読む）
   const use = window.claude && window.claude.use;
   if (!use) { S.loadedUnits = true; S.loadedUser = true; setStatus("<b>データに接続できません。</b> claude.ai で開くと、教材と学習記録が読み込まれます。"); rerenderAll(); return; }
-  S.samplePromise = window.claude.use("sample").then(s => { if (!s) { WR.sampleOk = false; if (curTab === "write") renderWrite(); } return s; }, () => { WR.sampleOk = false; return null; });
+  if (window.claude.local) { WR.relay = true; WR.pend = loadRelay(); $("wrHint").textContent = "依頼文を自分の Claude に送り、返事を貼り戻すと添削結果になります。"; } // 端末版: 添削は自分の Claude とのコピー＆貼り付け
+  else S.samplePromise = window.claude.use("sample").then(s => { if (!s) { WR.sampleOk = false; if (curTab === "write") renderWrite(); } return s; }, () => { WR.sampleOk = false; return null; });
   const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
   if (!db) { S.loadedUnits = true; S.loadedUser = true; setStatus("<b>データベースを使えません。</b> サインインした状態で、このページの権限を許可してください。"); rerenderAll(); return; }
   S.db = db;
