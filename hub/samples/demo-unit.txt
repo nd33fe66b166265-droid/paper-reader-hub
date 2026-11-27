@@ -1,0 +1,80 @@
+# 見本の章のデータファイル（生成プロンプト v7 の 5節の書式）。
+# 英文はこのアプリのために書いた自作の文章です（論文や教科書の引用ではありません）。
+id: demo-1
+source: demo
+label: 見本① How to Read a Research Paper
+toc: 1, 2, 3
+source-title: How to Read a Research Paper（見本）
+source-short: 見本
+source-authors: Paper Reader Hub
+source-venue: アプリの使い方を試すための自作の文章
+source-kind: paper
+
+---
+sec: 1 Start with the Abstract
+en: Reading a research paper for the first time can feel <t data-k='overwhelming'>overwhelming</t>,
+  especially when it is written in a foreign language. Rather than reading every sentence from beginning to end,
+  it is often more <t data-k='efficient'>efficient</t> to start with the <t>abstract</t>.
+  The abstract <t data-k='summarize'>summarizes</t> what the authors did, why they did it, and what they found.
+  In other words, it tells you whether the paper is worth reading <t data-k='in detail'>in detail</t>.
+ja: 研究論文を初めて読むことは、<strong>圧倒される</strong>ように感じられることがある。特にそれが外国語で書かれているときには。
+  すべての文を最初から最後まで読むのではなく、<strong>アブストラクト</strong>から始めるほうが、しばしばより<strong>効率的</strong>である。
+  アブストラクトは、著者らが何をしたか、なぜそれをしたか、そして何を見いだしたかを<strong>要約している</strong>。
+  言い換えれば、それはその論文が<strong>詳しく</strong>読む価値があるかどうかを教えてくれる。
+note: <code>Reading a research paper for the first time</code> 全体が主語（<strong>動名詞句</strong>）。動詞は <code>can feel</code>。
+note: <code>it is often more efficient to start ...</code> の <code>it</code> は<strong>形式主語</strong>。本当の主語は <code>to start with the abstract</code>。
+note: <code>what the authors did, why they did it, and what they found</code> は<strong>名詞節が3つ並んだ目的語</strong>。
+voc: overwhelming | 形 | 圧倒されるような、手に負えないほどの
+voc: efficient | 形 | 効率的な
+voc: abstract | 名 | 要旨（アブストラクト）
+voc: summarize | 動 | 要約する
+voc: in detail | 熟 | 詳しく
+phr: In other words, | 言い換えれば、 | In other words, | 前の文を短く言い直すときに文頭で使う
+phr: be worth V-ing | Vする価値がある | is worth reading | worth の後ろは動名詞（to V にしない）
+phr: Rather than V-ing, | Vするのではなく、 | Rather than reading | than の後ろは動名詞か動詞の原形
+
+---
+sec: 2 Look at the Figures
+en: After the abstract, look at the figures and their <t data-k='caption'>captions</t>.
+  Figures often <t>convey</t> the main result more clearly than the text does.
+  A <t data-k='block diagram'>block diagram</t> shows how the system is <t data-k='organize'>organized</t>,
+  while a plot shows how one <t>quantity</t> changes with another.
+  If a figure is hard to understand, note your question and move on; the body of the paper may answer it later.
+ja: アブストラクトの後は、図とその<strong>キャプション</strong>を見よう。図はしばしば、本文がするよりも明確に主な結果を<strong>伝える</strong>。
+  <strong>ブロック図</strong>はシステムがどのように<strong>構成されている</strong>かを示し、一方でグラフはある<strong>量</strong>が別の量に応じてどう変わるかを示す。
+  図が理解しにくければ、疑問を書き留めて先へ進もう。論文の本文が後でそれに答えてくれるかもしれない。
+note: <code>more clearly than the text does</code> の <strong>does</strong> は <code>conveys the main result</code> の代わり（<strong>代動詞</strong>）。
+note: <code>while</code> はここでは「〜する一方で」と<strong>対比</strong>を表す。時間の「〜する間」ではない。
+note: セミコロン <code>;</code> は、関係の深い2つの文をつなぐ。ここでは「というのも」に近い気持ちで読める。
+voc: caption | 名 | 図の説明文（キャプション）
+voc: convey | 動 | 伝える
+voc: block diagram | 名 | ブロック図
+voc: organize | 動 | 構成する、組み立てる
+voc: quantity | 名 | 量
+phr: A shows how ~ | Aは〜がどのようになっているかを示す | shows how the system is organized | how の後ろはふつうの文の語順（how is the system にしない）
+phr: A changes with B | AはBに応じて変わる | changes with another | 前置詞は with
+phr: more clearly than ~ | 〜よりもはっきりと | more clearly than the text does
+
+---
+sec: 3 Read the Body
+en: Only after these two steps should you read the body from the introduction <t>onward</t>.
+  By then, you already have a rough <t>map</t> of the paper, so each paragraph is easier to place in context.
+  When you meet an <t>unfamiliar</t> word, try to guess its meaning from the sentence before looking it up.
+  It is well known that words learned <t data-k='in context'>in context</t> are <t data-k='retain'>retained</t>
+  longer than words <t data-k='memorize'>memorized</t> from a list.
+ja: これら2つの段階の後で初めて、序論<strong>から先</strong>の本文を読むべきである。
+  その時までに、あなたはすでに論文のおおまかな<strong>地図</strong>を持っているので、各段落を文脈の中に位置づけやすくなる。
+  <strong>なじみのない</strong>語に出会ったら、調べる前に文からその意味を推測してみよう。
+  <strong>文脈の中で</strong>学んだ語は、リストから<strong>暗記した</strong>語よりも長く<strong>記憶に保持される</strong>ことはよく知られている。
+note: <code>Only after these two steps</code> が文頭に出たため<strong>倒置</strong>が起き、<code>should you read</code> の語順になっている。「〜の後で初めて…する」と読む。
+note: <code>from the introduction onward</code> の <strong>onward</strong> は「それ以降」。
+note: <code>words learned in context</code> の <code>learned</code> は<strong>過去分詞</strong>で、前の <code>words</code> を後ろから修飾している。
+voc: onward | 副 | それ以降、先へ
+voc: map | 名 | 地図（ここでは論文の全体像のたとえ）
+voc: unfamiliar | 形 | なじみのない
+voc: in context | 熟 | 文脈の中で
+voc: retain | 動 | 保持する、覚えておく
+voc: memorize | 動 | 暗記する
+phr: It is well known that ~ | 〜ということはよく知られている | It is well known that | 主張の根拠が広く知られた事実であることを示す
+phr: Only after A ~ | Aの後で初めて〜 | Only after these two steps should you | 文頭に置くと、後ろが倒置（助動詞＋主語）になる
+phr: from A onward | A以降、Aから先 | from the introduction onward

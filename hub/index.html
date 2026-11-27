@@ -606,6 +606,35 @@ dialog::backdrop { background: rgba(10,12,20,.4); }
 .mode-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
 .mode-row .note { font-size: .78rem; color: var(--ink-3); }
 
+/* ---------- 教材の取り込み（段階2） ---------- */
+.top-acts { display: flex; gap: 8px; }
+dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 24px); overflow: auto; }
+.im-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dlg h3 { font-size: .98rem; font-weight: 600; margin: 6px 0 0; }
+.im-pick { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.im-pick label.btn { display: inline-block; cursor: pointer; }
+.im-paste summary { cursor: pointer; font-size: .86rem; color: var(--indigo); }
+.im-paste textarea { margin: 8px 0; font-family: var(--mono); font-size: .8rem; }
+.im-item { border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; margin-top: 10px; background: var(--bg); min-width: 0; }
+.im-item.bad { border-color: color-mix(in srgb, var(--rose) 50%, var(--rule)); }
+.im-item-head { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
+.im-name { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.im-file { font-family: var(--mono); font-size: .74rem; color: var(--ink-3); overflow-wrap: anywhere; }
+.im-stats { font-size: .8rem; color: var(--ink-2); margin-top: 4px; }
+.im-msgs { margin: 8px 0 0; padding-left: 1.2em; font-size: .82rem; line-height: 1.55; }
+.im-msgs li { overflow-wrap: anywhere; margin-top: 2px; }
+.im-msgs.err li::marker { color: var(--rose); }
+.im-msgs .ln { font-family: var(--mono); font-size: .74rem; color: var(--ink-3); margin-right: 4px; }
+.im-acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+.im-src { margin-top: 10px; }
+.im-src-name { font-weight: 600; font-size: .9rem; overflow-wrap: anywhere; }
+.im-units { list-style: none; margin: 6px 0 0; padding: 0; }
+.im-units li { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 8px 0; border-top: 1px solid var(--rule); min-width: 0; }
+.im-units li > div { min-width: 0; }
+.im-units .btn { flex: none; }
+.im-del { border-top: 1px solid var(--rule); padding: 8px 0; font-size: .84rem; }
+.im-del p { margin: 0 0 8px; color: var(--ink-2); }
+
 /* ---------- correction card ---------- */
 .fx-ja { font-weight: 600; font-size: 1.35rem; line-height: 1.6; margin: 14px 0 4px; overflow-wrap: anywhere; }
 .fx-hint { font-size: .82rem; color: var(--ink-3); margin: 0; }
@@ -623,7 +652,10 @@ dialog::backdrop { background: rgba(10,12,20,.4); }
       <p class="eyebrow">Paper reader hub</p>
       <h1 class="app-name">論文リーダー学習ハブ</h1>
     </div>
-    <button class="icon-btn" id="openSettings" type="button">設定</button>
+    <div class="top-acts">
+      <button class="icon-btn" id="openImport" type="button" hidden>教材</button>
+      <button class="icon-btn" id="openSettings" type="button">設定</button>
+    </div>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="画面の切り替え">
@@ -730,6 +762,7 @@ dialog::backdrop { background: rgba(10,12,20,.4); }
 
     <h2 class="sec-title">教材</h2>
     <p class="sec-desc">取り込んだリーダーの一覧です。バーはその回の単語のうち、学習を始めた語の割合です。</p>
+    <p class="sec-desc" id="importLinkRow" hidden><button class="btn small" type="button" data-open-import>教材を追加・管理</button></p>
     <div id="sourceList"></div>
     <div id="archList"></div>
   </section>
@@ -900,11 +933,34 @@ dialog::backdrop { background: rgba(10,12,20,.4); }
   </form>
 </dialog>
 
+<dialog id="importDlg" class="wide" aria-labelledby="imTitle">
+  <div class="dlg">
+    <div class="im-head"><h2 id="imTitle">教材</h2><button class="btn small" type="button" id="imClose">閉じる</button></div>
+    <h3>教材を追加</h3>
+    <p class="note" style="margin:0">自分の Claude で作った<b>章のデータファイル（.txt）</b>と、資料の<b>全体図（.json）</b>を取り込みます。まとめて選べます。取り込む前に形を点検し、直す所があれば取り込みません。同じ章ID の章は差し替えます（覚えた単語と表現の記録はそのまま引き継がれます）。</p>
+    <div class="im-pick">
+      <label class="btn primary" for="imFile">ファイルを選ぶ</label>
+      <input type="file" id="imFile" multiple accept=".txt,.json,text/plain,application/json" hidden>
+      <button class="textbtn" type="button" id="imSample">見本で試す</button>
+    </div>
+    <details class="im-paste" id="imPasteBox">
+      <summary>文字を貼り付けて取り込む</summary>
+      <textarea class="area" id="imPaste" rows="7" spellcheck="false" placeholder="id: xu2019-2a&#10;source: xu2019&#10;label: …&#10;toc: …&#10;&#10;---&#10;sec: …&#10;en: …"></textarea>
+      <button class="btn small" type="button" id="imPasteGo">点検する</button>
+    </details>
+    <div id="imResult" aria-live="polite"></div>
+    <h3>取り込んだ教材</h3>
+    <div id="imList"></div>
+  </div>
+</dialog>
+
 <div class="toast" id="toast" hidden></div>
 <div class="rd-tip" id="rdTip" role="tooltip"></div>
 
 <!-- 端末保存の部品（IndexedDB）。claude.ai の中では本物の window.claude を使うので何もしない -->
 <script src="local-db.js"></script>
+<!-- 教材の取り込み（章のデータファイルの組み立てと点検） -->
+<script src="import.js"></script>
 <script>
 /* =========================================================
    論文リーダー学習ハブ — コードの地図（引き継ぎ用）
@@ -1618,6 +1674,7 @@ function renderToday() {
   if (!S.units.length) {
     box.innerHTML = !S.loadedUnits ? `<div class="notice">教材を読み込んでいます…</div>`
       : archivedIds().length ? `<div class="notice"><b>すべての資料をしまっています。</b><br>下の「しまった資料」から戻せます。新しいリーダーを作ると、ここに追加されます。</div>`
+      : IM.on ? `<div class="notice"><b>まだ教材が登録されていません。</b><br>自分の Claude で作った章のデータファイルを「教材」から取り込むと、ここに出ます。<div class="wr-acts" style="margin-top:10px"><button class="btn small primary" type="button" data-open-import>教材を追加</button></div></div>`
       : `<div class="notice"><b>まだリーダーが登録されていません。</b><br>論文リーダーのプロジェクトでリーダーを作ると、ここに追加されます。</div>`;
     return;
   }
@@ -3267,6 +3324,201 @@ $("sSave").addEventListener("click", () => {
 });
 
 /* =========================================================
+   Import（段階2: 教材の取り込み。端末保存のときだけ）
+   ---------------------------------------------------------
+   章のデータファイル（.txt）と全体図（.json）を import.js（HubImport）で組み立て・点検し、
+   誤りが無ければ units / texts / sources / overviews に書く。書いたあとは、いつもの購読
+   （subscribeUnits・sources の onSnapshot）が新しい章を届けるので、読む・復習の画面はそのまま動く。
+   ========================================================= */
+const IM = { on: false, pending: null, busy: false, delAsk: null, done: null };
+function imOpen() {
+  if (!IM.on) return;
+  try { $("importDlg").showModal(); } catch (e) { $("importDlg").setAttribute("open", ""); }
+  renderImResult(); renderImList();
+}
+function imClose() { try { $("importDlg").close(); } catch (e) { $("importDlg").removeAttribute("open"); } }
+$("openImport").addEventListener("click", imOpen);
+$("imClose").addEventListener("click", imClose);
+document.addEventListener("click", (e) => { if (e.target.closest("[data-open-import]")) imOpen(); });
+/* いまデータベースにある教材（しまった資料の章も含める） */
+async function imContext() {
+  const [us, ss, os] = await Promise.all(["units", "sources", "overviews"].map(c => S.db.collection(c).get()));
+  const pick = (sn) => { const o = {}; sn.docs.forEach(d => { o[d.id] = d.data(); }); return o; };
+  return { units: pick(us), sources: pick(ss), overviews: pick(os) };
+}
+function readFileText(f) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result || "")); r.onerror = () => rej(r.error);
+    r.readAsText(f, "utf-8");
+  });
+}
+async function imCheck(inputs) {
+  if (!S.db || !window.HubImport) return;
+  IM.done = null; IM.delAsk = null;
+  try {
+    const ctx = await imContext();
+    IM.pending = { inputs, ctx, res: HubImport.analyze(inputs, ctx) };
+  } catch (e) { console.warn("import", e); IM.pending = null; toast("教材を点検できませんでした。もう一度試してください。"); }
+  renderImResult();
+}
+$("imFile").addEventListener("change", async (e) => {
+  const files = [...(e.target.files || [])];
+  if (!files.length) return;
+  try { await imCheck(await Promise.all(files.map(async f => ({ name: f.name, text: await readFileText(f) })))); }
+  catch (x) { toast("ファイルを読めませんでした。"); }
+  try { e.target.value = ""; } catch (x) {} // 同じファイルをもう一度選べるように
+});
+$("imPasteGo").addEventListener("click", () => {
+  const t = $("imPaste").value;
+  if (!t.trim()) { toast("貼り付ける欄が空です。"); return; }
+  imCheck([{ name: "貼り付けた文字", text: t }]);
+});
+$("imSample").addEventListener("click", async () => {
+  const [u, o] = await Promise.all(["samples/demo-unit.txt", "samples/demo-overview.json"].map(p =>
+    Promise.resolve().then(() => fetch(p, { cache: "no-cache" })).then(r => (r && r.ok ? r.text() : null)).catch(() => null)));
+  if (!u || !o) { toast("見本を読み込めませんでした。通信状態を確かめてください。"); return; }
+  imCheck([{ name: "demo-unit.txt（見本）", text: u }, { name: "demo-overview.json（見本）", text: o }]);
+});
+function imMsgs(list, cls) {
+  if (!list.length) return "";
+  return `<ul class="im-msgs ${cls}">${list.map(m => `<li>${m.line ? `<span class="ln">${m.line}行目</span>` : ""}${esc(m.msg)}</li>`).join("")}</ul>`;
+}
+function imStatsText(r) {
+  if (r.kind === "unit" && r.stats) return `${r.stats.blocks} 段落 · ${r.stats.words} 語 · 表現 ${r.stats.phr}`;
+  if (r.kind === "overview" && r.stats) return `全体図 · 章構成 ${r.stats.sections} 節`;
+  return "";
+}
+/* 直す所を、自分の Claude にそのまま貼れる文にする */
+function imReport(res) {
+  return "学習ハブに取り込もうとしたら、次の誤りが見つかりました。データファイルを直して、全文をもう一度ください。\n\n" + res.items.filter(r => r.errors.length).map(r =>
+    `■ ${r.name}${r.id ? `（${r.id}）` : ""}\n` + r.errors.map(m => `- ${m.line ? m.line + "行目: " : ""}${m.msg}`).join("\n")).join("\n\n");
+}
+function renderImResult() {
+  const box = $("imResult");
+  if (IM.done) {
+    box.innerHTML = `<div class="notice" style="margin-top:12px"><b>取り込みました。</b><br>${IM.done.map(r => esc(r.label || r.id) + (imStatsText(r) ? `（${esc(imStatsText(r))}）` : "")).join("<br>")}
+      <div class="im-acts">${IM.done.filter(r => r.kind === "unit").slice(0, 1).map(r => `<button class="btn small primary" type="button" data-im-read="${esc(r.id)}">読む</button>`).join("")}<button class="btn small" type="button" id="imDoneClose">閉じる</button></div></div>`;
+    return;
+  }
+  const P0 = IM.pending;
+  if (!P0) { box.innerHTML = ""; return; }
+  const res = P0.res, nRep = res.items.filter(r => r.replace).length;
+  box.innerHTML = res.items.map(r => {
+    const chip = r.errors.length ? `<span class="chip rose">直す所 ${r.errors.length}</span>`
+      : r.replace ? `<span class="chip ochre">差し替え</span>` : `<span class="chip moss">新しく追加</span>`;
+    const name = r.kind === "unit" ? (r.label || r.id || r.name) : r.kind === "overview" ? "全体図: " + (r.label || r.id || r.name) : r.name;
+    return `<div class="im-item${r.errors.length ? " bad" : ""}">
+      <div class="im-item-head"><span class="im-name">${esc(name)}</span>${chip}</div>
+      <div class="im-file">${esc(r.name)}${r.id ? " · " + esc(r.id) : ""}</div>
+      ${imStatsText(r) && !r.errors.length ? `<div class="im-stats">${esc(imStatsText(r))}</div>` : ""}
+      ${imMsgs(r.errors, "err")}
+      ${r.warnings.length ? `<div class="im-stats" style="margin-top:8px">気になる所（取り込みはできます）</div>${imMsgs(r.warnings, "warn")}` : ""}
+    </div>`;
+  }).join("") + (res.ok
+    ? `<div class="im-acts"><button class="btn primary" type="button" id="imGo"${IM.busy ? " disabled" : ""}>${nRep ? "差し替えて取り込む" : "取り込む"}</button><button class="btn" type="button" id="imCancel">やめる</button>${nRep ? `<span class="hint">差し替える章の、覚えた単語と表現の記録はそのまま残ります。</span>` : ""}</div>`
+    : `<div class="notice" style="margin-top:12px"><b>直す所があるので、まだ取り込んでいません。</b><br>上の「直す所」を自分の Claude に伝えてデータファイルを直してもらい、もう一度選んでください。
+        <div class="im-acts"><button class="btn small" type="button" id="imCopy">直す所をコピー</button><button class="btn small" type="button" id="imCancel">やめる</button></div></div>`);
+}
+async function imCopyText(text) {
+  try { if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); return true; } } catch (e) {}
+  try {
+    const ta = document.createElement("textarea"); ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+    $("importDlg").appendChild(ta); ta.select(); const ok = document.execCommand && document.execCommand("copy"); ta.remove(); return !!ok;
+  } catch (e) { return false; }
+}
+$("imResult").addEventListener("click", async (e) => {
+  if (e.target.closest("#imCancel")) { IM.pending = null; renderImResult(); return; }
+  if (e.target.closest("#imDoneClose")) { IM.done = null; renderImResult(); imClose(); return; }
+  const rd = e.target.closest("[data-im-read]");
+  if (rd) { IM.done = null; renderImResult(); imClose(); shUnitId = rd.dataset.imRead; lsSet("hub-sh-unit", shUnitId); setRdMode("read"); showTab("read"); return; }
+  if (e.target.closest("#imCopy") && IM.pending) { toast(await imCopyText(imReport(IM.pending.res)) ? "直す所をコピーしました。自分の Claude に貼り付けてください。" : "コピーできませんでした。"); return; }
+  if (e.target.closest("#imGo")) imApply();
+});
+/* 書き込む。点検したあとにほかのタブで教材が変わっていたら、点検し直す */
+async function imApply() {
+  const P0 = IM.pending;
+  if (!P0 || !P0.res.ok || IM.busy) return;
+  IM.busy = true; renderImResult();
+  try {
+    const ctx = await imContext();
+    if (JSON.stringify(ctx) !== JSON.stringify(P0.ctx)) {
+      IM.busy = false; await imCheck(P0.inputs);
+      toast("教材がほかで変わったので、点検し直しました。もう一度「取り込む」を押してください。"); return;
+    }
+    for (const [col, id, data] of P0.res.writes) await S.db.collection(col).doc(id).set(data);
+    imForget(P0.res.writes);
+    IM.done = P0.res.items; IM.pending = null;
+    toast("教材を取り込みました。");
+  } catch (e) {
+    console.warn("import", e);
+    toast("取り込みの途中で保存できませんでした。もう一度試してください。");
+  }
+  IM.busy = false;
+  renderImResult(); renderImList(); rerenderAll();
+}
+/* 読み込み済みの本文・全体図を捨てる（差し替え・削除のあと、次に要るとき読み直す） */
+function imForget(writes) {
+  writes.forEach(([col, id]) => {
+    if (col === "texts" || col === "units") { S.texts.delete(id); S.textMissing.delete(id); }
+    if (col === "overviews" || col === "sources") { S.overviews.delete(id); S.ovMissing.delete(id); ovShownFor = ""; }
+  });
+  ctxCache.clear(); rdShownFor = "";
+}
+async function renderImList() {
+  const box = $("imList");
+  if (!S.db) { box.innerHTML = ""; return; }
+  let ctx;
+  try { ctx = await imContext(); } catch (e) { box.innerHTML = `<div class="notice">一覧を読み込めませんでした。</div>`; return; }
+  const bySrc = new Map();
+  Object.keys(ctx.units).forEach(id => { const u = ctx.units[id]; if (!bySrc.has(u.source)) bySrc.set(u.source, []); bySrc.get(u.source).push({ id, ...u }); });
+  Object.keys(ctx.overviews).forEach(src => { if (!bySrc.has(src)) bySrc.set(src, []); });
+  if (!bySrc.size) { box.innerHTML = `<div class="notice">まだありません。上の「ファイルを選ぶ」か「見本で試す」から取り込めます。</div>`; return; }
+  const so = (id) => { const s = ctx.sources[id]; return s && typeof s.order === "number" ? s.order : 999; };
+  box.innerHTML = [...bySrc.entries()].sort((a, b) => so(a[0]) - so(b[0]) || (a[0] < b[0] ? -1 : 1)).map(([src, us]) => {
+    const s = ctx.sources[src] || {};
+    us.sort((a, b) => (a.order || 0) - (b.order || 0));
+    const rows = us.map(u => {
+      const ask = IM.delAsk === u.id;
+      return ask ? `<li style="display:block"><div class="im-del"><p><b>「${esc(u.label)}」を消しますか？</b> 本文と単語の一覧が消えます。覚え始めた単語と表現の復習の記録は残り、同じ章を取り込み直すと続きから使えます。${us.length === 1 ? `この資料の章はこれが最後なので、資料の情報${ctx.overviews[src] ? "と全体図" : ""}も消します。` : ""}</p>
+          <div class="wr-acts"><button class="btn small primary" type="button" data-im-del-yes="${esc(u.id)}">消す</button><button class="btn small" type="button" data-im-del-no>やめる</button></div></div></li>`
+        : `<li><div><div>${esc(u.label)}</div><div class="im-file">${esc(u.id)} · ${(u.blocks || []).length} 段落${S.archived[src] ? " · しまった資料" : ""}</div></div>
+          <button class="btn small" type="button" data-im-del="${esc(u.id)}">削除</button></li>`;
+    }).join("");
+    const ovRow = !us.length ? (IM.delAsk === "ov:" + src
+      ? `<li style="display:block"><div class="im-del"><p><b>この全体図を消しますか？</b></p><div class="wr-acts"><button class="btn small primary" type="button" data-im-del-yes="ov:${esc(src)}">消す</button><button class="btn small" type="button" data-im-del-no>やめる</button></div></div></li>`
+      : `<li><div><div>全体図だけ（章はまだありません）</div><div class="im-file">${esc(src)}</div></div><button class="btn small" type="button" data-im-del="ov:${esc(src)}">削除</button></li>`) : "";
+    return `<div class="im-src"><div class="im-src-name">${esc(s.title || src)}</div><div class="im-file">${esc(src)}${ctx.overviews[src] ? " · 全体図あり" : ""}</div><ul class="im-units">${rows}${ovRow}</ul></div>`;
+  }).join("");
+}
+$("imList").addEventListener("click", async (e) => {
+  const d = e.target.closest("[data-im-del]");
+  if (d) { IM.delAsk = d.dataset.imDel; renderImList(); return; }
+  if (e.target.closest("[data-im-del-no]")) { IM.delAsk = null; renderImList(); return; }
+  const y = e.target.closest("[data-im-del-yes]");
+  if (!y || IM.busy) return;
+  IM.busy = true; IM.delAsk = null;
+  const key = y.dataset.imDelYes;
+  try {
+    const ctx = await imContext(), del = [];
+    if (key.startsWith("ov:")) del.push(["overviews", key.slice(3)]);
+    else {
+      const u = ctx.units[key];
+      if (u) {
+        del.push(["units", key], ["texts", key]);
+        const left = Object.keys(ctx.units).filter(id => id !== key && ctx.units[id].source === u.source);
+        if (!left.length) { if (ctx.sources[u.source]) del.push(["sources", u.source]); if (ctx.overviews[u.source]) del.push(["overviews", u.source]); }
+      }
+    }
+    for (const [col, id] of del) await S.db.collection(col).doc(id).delete();
+    imForget(del);
+    toast("削除しました。");
+  } catch (x) { console.warn("import delete", x); toast("削除できませんでした。もう一度試してください。"); }
+  IM.busy = false;
+  renderImList(); rerenderAll();
+});
+
+/* =========================================================
    Boot
    ========================================================= */
 function updateBadge() { const c = counts(); const n = c.due + c.learn + c.newLeft + c.fix + c.phr; $("dueBadge").textContent = S.loadedUser && n ? String(n) : ""; if (curTab === "today") renderToday(); }
@@ -3312,6 +3564,8 @@ async function boot() {
   if (!db) { S.loadedUnits = true; S.loadedUser = true; setStatus("<b>データベースを使えません。</b> サインインした状態で、このページの権限を許可してください。"); rerenderAll(); return; }
   S.db = db;
   S.uid = user ? await user.id() : null;
+  // 端末保存（GitHub Pages 版）のときは、教材を自分で取り込む
+  if (window.claude.local && window.HubImport) { IM.on = true; $("openImport").hidden = false; $("importLinkRow").hidden = false; }
   // 資料の一覧と自分の記録を同時に読む（しまった資料を知ってから、章の目次を読むため）
   const srcReady = new Promise((res) => {
     let first = true;

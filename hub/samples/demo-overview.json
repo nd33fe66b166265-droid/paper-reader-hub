@@ -1,0 +1,39 @@
+{
+ "source": "demo",
+ "header": {
+  "title": "How to Read a Research Paper（見本）",
+  "sub": "アプリの使い方を試すための自作の文章",
+  "authors": "Paper Reader Hub",
+  "venue": "見本",
+  "doi": "",
+  "specs": []
+ },
+ "figure": {
+  "title": "読む順番",
+  "desc": "ブロックを押すと、下の章構成のその節に移ります。",
+  "svg": "<svg viewBox=\"0 0 720 120\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-label=\"論文を読む3つの段階\"><defs><marker id=\"ovah\" markerWidth=\"7\" markerHeight=\"5\" refX=\"7\" refY=\"2.5\" orient=\"auto\"><polygon points=\"0 0, 7 2.5, 0 5\" class=\"ov-head\" fill=\"var(--ink-3)\"/></marker></defs><text x=\"360\" y=\"20\" text-anchor=\"middle\" class=\"ov-note\">rough map first, details later</text><g class=\"ov-node\" data-sec=\"1\"><rect x=\"20\" y=\"34\" width=\"180\" height=\"62\" rx=\"7\" fill=\"var(--surface)\" stroke=\"var(--rule)\" stroke-width=\"1.2\"/><text x=\"110\" y=\"58\" text-anchor=\"middle\" class=\"ov-t1\">Abstract</text><text x=\"110\" y=\"74\" text-anchor=\"middle\" class=\"ov-t2\">What and why</text><text x=\"110\" y=\"88\" text-anchor=\"middle\" class=\"ov-t3\">1</text></g><line x1=\"202\" y1=\"65\" x2=\"266\" y2=\"65\" class=\"ov-line\" stroke=\"var(--ink-3)\" stroke-width=\"1.2\" marker-end=\"url(#ovah)\"/><g class=\"ov-node\" data-sec=\"2\"><rect x=\"270\" y=\"34\" width=\"180\" height=\"62\" rx=\"7\" fill=\"var(--surface)\" stroke=\"var(--rule)\" stroke-width=\"1.2\"/><text x=\"360\" y=\"58\" text-anchor=\"middle\" class=\"ov-t1\">Figures</text><text x=\"360\" y=\"74\" text-anchor=\"middle\" class=\"ov-t2\">Main results</text><text x=\"360\" y=\"88\" text-anchor=\"middle\" class=\"ov-t3\">2</text></g><line x1=\"452\" y1=\"65\" x2=\"516\" y2=\"65\" class=\"ov-line\" stroke=\"var(--ink-3)\" stroke-width=\"1.2\" marker-end=\"url(#ovah)\"/><g class=\"ov-node\" data-sec=\"3\"><rect x=\"520\" y=\"34\" width=\"180\" height=\"62\" rx=\"7\" fill=\"var(--surface)\" stroke=\"var(--rule)\" stroke-width=\"1.2\"/><text x=\"610\" y=\"58\" text-anchor=\"middle\" class=\"ov-t1\">Body</text><text x=\"610\" y=\"74\" text-anchor=\"middle\" class=\"ov-t2\">Introduction onward</text><text x=\"610\" y=\"88\" text-anchor=\"middle\" class=\"ov-t3\">3</text></g></svg>"
+ },
+ "toc": {
+  "title": "章構成",
+  "items": [
+   {
+    "id": "1",
+    "num": "1",
+    "en": "Start with the Abstract",
+    "ja": "まずアブストラクトで、論文が何をしたかをつかむ。"
+   },
+   {
+    "id": "2",
+    "num": "2",
+    "en": "Look at the Figures",
+    "ja": "次に図とキャプションで、主な結果を見る。"
+   },
+   {
+    "id": "3",
+    "num": "3",
+    "en": "Read the Body",
+    "ja": "最後に本文を序論から読む。"
+   }
+  ]
+ }
+}

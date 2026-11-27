@@ -33,7 +33,7 @@ async function userDocs() {
   // --- 空のデータベース ---
   let t = start();
   await delay(500);
-  ok(/まだリーダーが登録されていません/.test(t.w.document.body.textContent), "空のとき教材が無い案内が出ない");
+  ok(/まだ(リーダー|教材)が登録されていません/.test(t.w.document.body.textContent), "空のとき教材が無い案内が出ない");
   ok(!/データに接続できません|データベースを使えません|保存できない状態/.test(t.$("statusNote").textContent), "空の起動で接続できない表示: " + t.$("statusNote").textContent);
   await t.stop();
   if (process.argv[2] === "empty") return done();
