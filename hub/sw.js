@@ -25,6 +25,7 @@ const CORE = [
   "import.js",
   "relay.js",
   "pwa.js",
+  "merge.js",
   "manifest.webmanifest",
   "icons/icon-192.png",
   "icons/icon-512.png",
