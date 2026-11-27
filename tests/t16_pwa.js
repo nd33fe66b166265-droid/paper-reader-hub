@@ -50,6 +50,8 @@ function files() {
   const refs = [...html.matchAll(/<(?:script|link)\b[^>]*?(?:src|href)="([^"]+)"/g)].map((m) => m[1]).filter((u) => !/^(https?:|data:|#)/.test(u));
   ok(refs.length >= 7, "index.html の読み込みが見つからない: " + refs);
   refs.forEach((u) => ok(core.includes(u), "index.html が読むファイルが sw.js の CORE に無い: " + u));
+  // ダークモードでは上下の帯（状態バー）も暗い色にする
+  ok(/<meta name="theme-color" media="\(prefers-color-scheme: dark\)" content="#131419">/.test(html) && /<meta name="theme-color" media="\(prefers-color-scheme: light\)"/.test(html), "theme-color がダークモードに合わせていない");
   ["sw.js", "pwa.js"].forEach((f) => ok(/"__BUILD__"/.test(fs.readFileSync(path.join(HUB, f), "utf8")), f + " に版の印 __BUILD__ が無い"));
   const wf = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "pages.yml"), "utf8");
   ok(/__BUILD__.*hub\/sw\.js.*hub\/pwa\.js/.test(wf), "公開のときに版の印を入れていない（pages.yml）");

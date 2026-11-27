@@ -93,6 +93,17 @@ const paste = (t, s) => { const ta = t.$("wrRelayReply"); ta.value = s; ta.dispa
   t.$("wrRelayCopy").click(); await delay(20);
   ok(copied === prompt, "依頼文をコピーできない");
   ok(/コピーしました/.test(t.$("wrRelayCopied").textContent), "コピーしたと出ない");
+  // 頼む AI を選べる（Claude・Gemini・ChatGPT）。貼りかけの返事は残り、選んだものは端末に覚える
+  const aiLink = () => [...t.$("wrRelay").querySelectorAll("a.link")].map((a) => a.href + " " + a.textContent).join();
+  ok(/claude\.ai\/new .*Claude を開く/.test(aiLink()), "最初の頼む先が Claude でない: " + aiLink());
+  t.$("wrRelayReply").value = "draft"; t.$("wrRelayReply").dispatchEvent(new t.w.Event("input", { bubbles: true }));
+  t.click(t.$("wrRelay").querySelector('[data-relay-ai="gemini"]'));
+  ok(/gemini\.google\.com.*Gemini を開く/.test(aiLink()) && /Gemini の返事/.test(t.$("wrRelay").textContent), "Gemini を選んでも変わらない: " + aiLink());
+  ok(t.$("wrRelay").querySelector('[data-relay-ai="gemini"]').getAttribute("aria-checked") === "true", "選んだ AI に印が付かない");
+  ok(t.$("wrRelayReply").value === "draft" && t.$("wrRelayPrompt").value === prompt, "AI を選び直すと貼りかけの返事か依頼文が消える");
+  t.click(t.$("wrRelay").querySelector('[data-relay-ai="chatgpt"]'));
+  ok(/chatgpt\.com.*ChatGPT を開く/.test(aiLink()), "ChatGPT を選んでも変わらない: " + aiLink());
+  ok(t.w.localStorage.getItem("hub-wr-ai") === "chatgpt", "選んだ AI を覚えない");
   // 崩れた返事は保存しない
   const before = Object.keys(await sums()).length;
   paste(t, JSON.stringify(GOOD).slice(0, 80)); await delay(50);
