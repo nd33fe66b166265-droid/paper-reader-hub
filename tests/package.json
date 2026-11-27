@@ -1,1 +1,1 @@
-{"private":true,"dependencies":{"jsdom":"^24.1.3"}}
+{"private":true,"dependencies":{"fake-indexeddb":"^6.2.8","jsdom":"^24.1.3"}}
