@@ -51,6 +51,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      # 公開のたびに sw.js の中身が変わるよう、版の印（コミットの短い ID）を入れる。
+      # ブラウザは sw.js が変わったことで新しい版に気づき、古い版の写しを消す
+      - name: 版の印を入れる
+        run: sed -i "s/__BUILD__/${GITHUB_SHA::7}/g" hub/sw.js hub/pwa.js
       - uses: actions/upload-pages-artifact@v3
         with:
           path: hub

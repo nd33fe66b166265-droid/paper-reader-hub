@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#F3F4F7"><link rel="icon" href="icons/favicon-32.png" sizes="32x32"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="論文ハブ"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>論文リーダー学習ハブ</title>
 <meta name="description" content="論文リーダーで出てきた単語と熟語・定型文の間隔反復、原文の音読・シャドーイング、要約の添削と学習時間の記録">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -652,6 +652,25 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
 .fx-was { margin-top: 10px; font-size: .84rem; color: var(--ink-2); }
 .fx-was s { font-family: var(--serif); color: var(--ink-3); text-decoration-color: var(--rose); }
 
+/* ---------- アプリにする（段階4: ホーム画面・保存・バックアップ） ---------- */
+.app-note { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 14px; border-style: solid; border-color: color-mix(in srgb, var(--indigo) 35%, transparent); background: var(--indigo-soft); color: var(--ink); }
+.app-note.upd { border-color: color-mix(in srgb, var(--moss) 40%, transparent); background: var(--moss-soft); }
+.app-note .wr-acts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ap-sec { border-top: 1px solid var(--rule-soft); padding-top: 12px; display: grid; gap: 8px; }
+.ap-sec p { margin: 0; font-size: .88rem; color: var(--ink-2); line-height: 1.6; }
+.ap-sec p b { color: var(--ink); }
+.ap-steps { margin: 0; padding-left: 1.4em; font-size: .88rem; line-height: 1.7; color: var(--ink); }
+.ap-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ap-row label.btn { display: inline-block; cursor: pointer; }
+.ap-state { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .78rem; background: var(--surface-2); color: var(--ink-2); }
+.ap-state.good { background: var(--moss-soft); color: var(--moss); }
+.ap-state.warn { background: var(--ochre-soft); color: var(--ochre); }
+.ap-confirm { border: 1px solid color-mix(in srgb, var(--rose) 35%, transparent); background: var(--rose-soft); border-radius: 10px; padding: 12px 14px; display: grid; gap: 8px; }
+.ap-confirm table { border-collapse: collapse; font-size: .84rem; }
+.ap-confirm th, .ap-confirm td { padding: 2px 10px 2px 0; text-align: left; font-weight: normal; }
+.ap-confirm th { color: var(--ink-2); }
+.ap-err { color: var(--rose); font-size: .86rem; margin: 0; }
+
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 
@@ -663,6 +682,7 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
     </div>
     <div class="top-acts">
       <button class="icon-btn" id="openImport" type="button" hidden>教材</button>
+      <button class="icon-btn" id="openApp" type="button" hidden>保存</button>
       <button class="icon-btn" id="openSettings" type="button">設定</button>
     </div>
   </header>
@@ -679,6 +699,7 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
   <section id="view-today" role="tabpanel" aria-labelledby="tab-today">
     <div id="statusNote"></div>
     <div id="shiftNote"></div>
+    <div id="appNote"></div>
     <div class="today-grid">
       <div class="panel">
         <div class="due-head"><span class="due-label">今日の復習</span><span class="due-label mono" id="todayDate"></span></div>
@@ -935,7 +956,7 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
       <select class="field" id="sVoice"></select>
       <span class="note">この端末で使える英語の声です。端末ごとに保存されます。</span>
     </label>
-    <p class="note" style="margin:0">復習を1枚もしなかった日は、その日から後ろの復習日をすべて1日ずつずらします（次の日が2日分になりません）。1日の区切りは午前4時です。学習の記録はあなたのアカウントにだけ保存され、ほかの人からは見えません。</p>
+    <p class="note" style="margin:0">復習を1枚もしなかった日は、その日から後ろの復習日をすべて1日ずつずらします（次の日が2日分になりません）。1日の区切りは午前4時です。<span id="sPrivNote">学習の記録はあなたのアカウントにだけ保存され、ほかの人からは見えません。</span></p>
     <div class="dlg-acts">
       <button class="btn" value="cancel" type="submit">閉じる</button>
       <button class="btn primary" id="sSave" value="save" type="submit">保存</button>
@@ -964,6 +985,35 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
   </div>
 </dialog>
 
+<dialog id="appDlg" class="wide" aria-labelledby="apTitle">
+  <div class="dlg">
+    <div class="im-head"><h2 id="apTitle">保存とバックアップ</h2><button class="btn small" type="button" id="apClose">閉じる</button></div>
+    <div class="ap-sec" id="apInstall"></div>
+    <div class="ap-sec">
+      <h3>この端末の保存 <span class="ap-state" id="apPersist"></span></h3>
+      <p id="apStoreText"></p>
+      <div class="ap-row" id="apPersistRow" hidden><button class="btn small" type="button" id="apPersistBtn">消されにくくする</button></div>
+    </div>
+    <div class="ap-sec">
+      <h3>バックアップ</h3>
+      <p>教材と学習の記録を、1つのファイル（.hubbackup.json）に書き出します。スマホを替えるときや、ブラウザのデータを消してしまったときに、このファイルから戻せます。ファイルはこの端末の外（クラウドのドライブなど）にも置いておくと安心です。</p>
+      <p id="apLast"></p>
+      <div class="ap-row">
+        <button class="btn primary" type="button" id="apExport">バックアップを書き出す</button>
+        <label class="btn" for="apFile">バックアップから戻す</label>
+        <input type="file" id="apFile" accept=".json,application/json" hidden>
+      </div>
+      <div id="apResult" aria-live="polite"></div>
+      <div class="ap-row" id="apUndoRow" hidden><span class="hint" id="apUndoText"></span><button class="textbtn" type="button" id="apUndo">戻す前の状態に戻す</button></div>
+    </div>
+    <div class="ap-sec">
+      <h3>アプリの版</h3>
+      <p>版: <span class="mono" id="apBuild"></span>。通信できるときは、開くたびに最新の版を使います。表示がおかしいときは「開き直す」を押してください（記録は消えません）。</p>
+      <div class="ap-row"><button class="btn small" type="button" id="apReload">開き直す</button></div>
+    </div>
+  </div>
+</dialog>
+
 <div class="toast" id="toast" hidden></div>
 <div class="rd-tip" id="rdTip" role="tooltip"></div>
 
@@ -973,6 +1023,8 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
 <script src="import.js"></script>
 <!-- 書くタブの添削: 自分の Claude との「コピー＆貼り付け」で返事を読み取る -->
 <script src="relay.js"></script>
+<!-- アプリにする部品（Service Worker・ホーム画面・保存・バックアップの読み書き） -->
+<script src="pwa.js"></script>
 <script>
 /* =========================================================
    論文リーダー学習ハブ — コードの地図（引き継ぎ用）
@@ -3628,6 +3680,239 @@ $("imList").addEventListener("click", async (e) => {
 });
 
 /* =========================================================
+   App（段階4: ホーム画面・保存・バックアップ。端末保存のときだけ）
+   ---------------------------------------------------------
+   部品は pwa.js（HubPWA）と local-db.js（dumpAll / replaceAll / freeze）。ここは画面だけ。
+   - 書き出し: 画面に残った記録を書き終えてから、データベースの中身を全部 1 つの JSON にする
+   - 戻す: ファイルを点検 → 中身の数を見せて確かめる → 今の中身を「戻す前の状態」として別の
+     データベース（paper-reader-hub-undo）に取っておく → 置き換える → 開き直す
+     置き換える前に、この画面からの書き込みを止める（S.canSave と db.freeze）。止めないと、
+     画面に残った古い記録が、開き直す直前（pagehide）に戻した記録を上書きしてしまう。
+   - 今日の画面の知らせ: 新しい版 ＞ ホーム画面への追加 ＞ バックアップのすすめ（1つだけ出す）
+   localStorage: hub-last-backup（最後に書き出した時刻）、hub-install-later / hub-backup-later（「今はしない」の時刻）、
+                 hub-undo-at（戻す前の状態を取っておいた時刻）、hub-restored（開き直した後に出す知らせ）
+   ========================================================= */
+const AP = { on: false, pending: null, busy: false, err: "", update: false, broken: false };
+const AP_UNDO_DB = "paper-reader-hub-undo", DAY_MS = 86400000;
+function apOpen() {
+  if (!AP.on) return;
+  try { $("appDlg").showModal(); } catch (e) { $("appDlg").setAttribute("open", ""); }
+  renderApp();
+}
+function apClose() { try { $("appDlg").close(); } catch (e) { $("appDlg").removeAttribute("open"); } }
+$("openApp").addEventListener("click", apOpen);
+$("apClose").addEventListener("click", apClose);
+$("apReload").addEventListener("click", () => location.reload());
+/* 画面に残った記録（復習・読んだ位置・学習時間）をすべて書き終えるのを待つ */
+async function saveAllNow() {
+  clearTimeout(flushTimer); saveTime(); flush(); saveProgress();
+  await writeChain;
+}
+function apFmtTime(t) {
+  const d = new Date(t); if (!t || isNaN(d)) return "不明";
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+function apDaysSince(k) { const t = +lsGet(k, "0"); return t ? Math.floor((Date.now() - t) / DAY_MS) : null; }
+
+function renderApp() {
+  if (!AP.on) return;
+  $("apInstall").innerHTML = apInstallHtml();
+  $("apBuild").textContent = HubPWA.build();
+  const last = +lsGet("hub-last-backup", "0");
+  $("apLast").innerHTML = last ? `最後に書き出したのは <b>${esc(apFmtTime(last))}</b> です。` : `<b>まだ書き出していません。</b>`;
+  const undoAt = +lsGet("hub-undo-at", "0");
+  $("apUndoRow").hidden = !undoAt;
+  $("apUndoText").textContent = undoAt ? `${apFmtTime(undoAt)} にバックアップから戻しました。` : "";
+  $("apExport").disabled = AP.busy;
+  renderApStore(); renderApResult();
+}
+function apInstallHtml() {
+  if (HubPWA.isStandalone()) return `<h3>ホーム画面 <span class="ap-state good">ホーム画面から開いています</span></h3><p>このまま使えます。通信できないところでも開けます。</p>`;
+  const pf = HubPWA.platform();
+  let steps;
+  if (HubPWA.canPromptInstall()) steps = `<div class="ap-row"><button class="btn primary" type="button" id="apInstallBtn">ホーム画面に追加する</button></div>`;
+  else if (pf === "ios") steps = `<ol class="ap-steps"><li>Safari の<b>共有ボタン</b>（四角から上向きの矢印。画面の下か、アドレスバーの右）を押す</li><li>一覧を上へずらして<b>「ホーム画面に追加」</b>を押す</li><li>右上の<b>「追加」</b>を押す</li></ol><p>「ホーム画面に追加」が見当たらないときは、このページを Safari で開いてください。</p>`;
+  else if (pf === "android") steps = `<ol class="ap-steps"><li>Chrome の右上の<b>︙</b>（メニュー）を押す</li><li><b>「ホーム画面に追加」</b>か<b>「アプリをインストール」</b>を押す</li><li><b>「インストール」</b>（または「追加」）を押す</li></ol>`;
+  else steps = `<p>Chrome や Edge では、アドレスバーの右にある<b>インストール</b>のボタンから追加できます。</p>`;
+  const share = pf === "ios"
+    ? `<p><b>iPhone・iPad では、Safari とホーム画面のアプリは記録を別々に持ちます。</b>Safari で学習した記録や取り込んだ教材は、先にここで「バックアップを書き出す」をして、ホーム画面のアプリで「バックアップから戻す」をすると移せます。</p>`
+    : `<p>ホーム画面のアプリと、このブラウザのページは、同じ記録を使います。</p>`;
+  return `<h3>ホーム画面に追加 <span class="ap-state warn">まだです</span></h3><p>ホーム画面に追加すると、アプリのように全画面で開けて、通信できないところ（機内モードなど）でも使えます。${pf === "ios" ? "しばらく開かなかったときに、ブラウザが保存を消す心配もなくなります。" : ""}</p>${steps}${share}`;
+}
+async function renderApStore() {
+  const [p, est] = await Promise.all([HubPWA.persisted(), HubPWA.estimate()]);
+  const chip = $("apPersist");
+  chip.className = "ap-state" + (p === true ? " good" : p === false ? " warn" : "");
+  chip.textContent = p === true ? "消されにくい設定です" : p === false ? "ふつうの設定です" : "";
+  const used = est && est.usage ? `今は約 ${(est.usage / 1048576).toFixed(est.usage < 10485760 ? 1 : 0)} MB を使っています。` : "";
+  const ios = HubPWA.platform() === "ios" && !HubPWA.isStandalone()
+    ? "Safari は、しばらく開かなかったサイトの保存を消すことがあります。ホーム画面に追加して使うと、この心配はありません。" : "";
+  $("apStoreText").innerHTML = `教材と学習の記録は、<b>この端末の中だけ</b>に保存しています（サーバーには送りません）。${used}${ios}${p === false ? "「消されにくくする」を押すと、端末の空きが少なくなったときにも、ブラウザが自動では消さなくなります。" : ""}ただし、ブラウザの設定で「サイトのデータを消す」をすると消えます。ときどきバックアップを書き出してください。`;
+  $("apPersistRow").hidden = p !== false;
+}
+$("apPersistBtn").addEventListener("click", async () => {
+  const r = await HubPWA.persist();
+  toast(r ? "消されにくくしました。" : "このブラウザでは、今は設定できませんでした。ホーム画面に追加して開くと設定できることがあります。");
+  renderApStore();
+});
+$("apInstall").addEventListener("click", async (e) => {
+  if (!e.target.closest("#apInstallBtn")) return;
+  const r = await HubPWA.promptInstall();
+  if (r === "accepted") toast("ホーム画面に追加しました。次からはホーム画面のアイコンから開いてください。");
+  renderApp(); renderAppNote();
+});
+
+/* ---------- 書き出す ---------- */
+async function apSaveFile(blob, name) {
+  // スマホでは共有の画面から「ファイルに保存」やドライブを選べる。使えなければふつうのダウンロード
+  if (HubPWA.platform() !== "desktop" && navigator.canShare && window.File) {
+    const file = new File([blob], name, { type: "application/json" });
+    let can = false; try { can = navigator.canShare({ files: [file] }); } catch (e) { can = false; }
+    if (can) {
+      try { await navigator.share({ files: [file], title: name }); return "share"; }
+      catch (e) { if (e && e.name === "AbortError") return "cancel"; }
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name; a.hidden = true;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  return "download";
+}
+async function apExport() {
+  if (AP.busy || !S.db) return;
+  AP.busy = true; renderApp();
+  try {
+    await saveAllNow();
+    const rows = await S.db.dumpAll();
+    const name = HubPWA.backupFileName();
+    const blob = new Blob([JSON.stringify(HubPWA.makeBackup(rows))], { type: "application/json" });
+    const how = await apSaveFile(blob, name);
+    if (how !== "cancel") {
+      lsSet("hub-last-backup", String(Date.now()));
+      const c = HubPWA.summarize(rows);
+      toast(`書き出しました（${name}。章 ${c.units}・復習カード ${c.cards} 枚）。`);
+    }
+  } catch (e) { console.warn("backup export", e); toast("書き出せませんでした。もう一度試してください。"); }
+  AP.busy = false; renderApp(); renderAppNote();
+}
+$("apExport").addEventListener("click", apExport);
+
+/* ---------- 戻す ---------- */
+$("apFile").addEventListener("change", async (e) => {
+  const f = e.target.files && e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+  let text;
+  try { text = await readFileText(f); } catch (x) { AP.pending = null; AP.err = "ファイルを読めませんでした。"; renderApResult(); return; }
+  await apCheck(text, f.name);
+});
+async function apCheck(text, name) {
+  const r = HubPWA.parseBackup(text);
+  if (!r.ok) { AP.pending = null; AP.err = r.error; renderApResult(); return; }
+  let cur = null;
+  try { await saveAllNow(); cur = HubPWA.summarize(await S.db.dumpAll()); } catch (e) { cur = null; }
+  AP.pending = { rows: r.rows, info: r.info, cur, name, undo: false }; AP.err = "";
+  renderApResult();
+}
+function renderApResult() {
+  const box = $("apResult");
+  if (AP.broken) { box.innerHTML = `<p class="ap-err">戻せませんでした。今の中身はそのままです。「開き直す」を押してから、もう一度試してください。</p><div class="ap-row"><button class="btn small" type="button" data-ap-reload>開き直す</button></div>`; return; }
+  if (AP.err) { box.innerHTML = `<p class="ap-err">${esc(AP.err)}</p>`; return; }
+  const P0 = AP.pending;
+  if (!P0) { box.innerHTML = ""; return; }
+  const b = P0.info.counts, c = P0.cur;
+  const row = (k, x, y) => `<tr><th>${k}</th><td>${x}</td><td>${c ? y : "?"}</td></tr>`;
+  const fewer = c && b.cards < c.cards;
+  box.innerHTML = `<div class="ap-confirm">
+    <b>${P0.undo ? "戻す前の状態" : "このバックアップ"}で、今の端末の中身を置き換えますか？</b>
+    <table><tr><th></th><td><b>${P0.undo ? "戻す前の状態" : "バックアップ"}</b></td><td><b>今の端末</b></td></tr>
+    ${row("書き出した日時", esc(apFmtTime(Date.parse(P0.info.exportedAt))), "")}
+    ${c ? row("教材の章", b.units, c.units) + row("復習カード", b.cards + " 枚", c.cards + " 枚") + row("学習時間の記録", b.days + " 日", c.days + " 日") + row("手入力の学習記録", b.logs + " 件", c.logs + " 件") : ""}
+    </table>
+    ${fewer ? `<p class="ap-err">${P0.undo ? "" : "バックアップの方が、"}復習カードが今より少なくなります。古いバックアップでないか確かめてください。</p>` : ""}
+    <p class="note" style="margin:0">今の中身は消さずに「戻す前の状態」としてこの端末に取っておくので、あとから「戻す前の状態に戻す」で元に戻せます。置き換えたあと、アプリを開き直します。</p>
+    <div class="ap-row"><button class="btn primary" type="button" id="apGo"${AP.busy ? " disabled" : ""}>置き換える</button><button class="btn" type="button" id="apCancel"${AP.busy ? " disabled" : ""}>やめる</button></div>
+  </div>`;
+}
+$("apResult").addEventListener("click", (e) => {
+  if (e.target.closest("[data-ap-reload]")) { location.reload(); return; }
+  if (e.target.closest("#apCancel")) { AP.pending = null; renderApResult(); return; }
+  if (e.target.closest("#apGo")) apApply();
+});
+async function apApply() {
+  const P0 = AP.pending;
+  if (!P0 || AP.busy) return;
+  AP.busy = true; renderApResult();
+  try {
+    await saveAllNow();
+    S.canSave = false; S.db.freeze(); // ここから先、この画面は記録を書かない（開き直すまで）
+    const cur = await S.db.dumpAll();
+    const undo = await window.claude.openDb(AP_UNDO_DB);
+    if (!undo) throw new Error("戻す前の状態を取っておけません");
+    try { await undo.replaceAll(cur); } finally { undo.close(); }
+    await S.db.replaceAll(P0.rows);
+    lsSet("hub-undo-at", String(Date.now()));
+    const c = P0.info.counts;
+    lsSet("hub-restored", P0.undo ? "戻す前の状態に戻しました。" : `バックアップから戻しました（章 ${c.units}・復習カード ${c.cards} 枚）。`);
+  } catch (e) {
+    console.warn("backup restore", e);
+    AP.busy = false; AP.broken = true; renderApResult();
+    return;
+  }
+  location.reload();
+}
+$("apUndo").addEventListener("click", async () => {
+  if (AP.busy) return;
+  try {
+    const u = await window.claude.openDb(AP_UNDO_DB);
+    const rows = u ? await u.dumpAll() : []; if (u) u.close();
+    await saveAllNow();
+    const cur = HubPWA.summarize(await S.db.dumpAll());
+    AP.err = "";
+    AP.pending = { rows, info: { exportedAt: new Date(+lsGet("hub-undo-at", "0")).toISOString(), counts: HubPWA.summarize(rows) }, cur, undo: true };
+  } catch (e) { AP.pending = null; AP.err = "戻す前の状態を読めませんでした。"; }
+  renderApResult();
+});
+
+/* ---------- 今日の画面の知らせ ---------- */
+function apNoteKind() {
+  if (!AP.on) return "";
+  if (AP.update) return "update";
+  const later = (k, days) => { const d = apDaysSince(k); return d != null && d < days; };
+  if (!HubPWA.isStandalone() && !later("hub-install-later", 30)) return "install";
+  const hasRec = Object.keys(S.srs).length > 0;
+  const since = apDaysSince("hub-last-backup");
+  if (S.loadedUser && hasRec && (since == null || since >= 14) && !later("hub-backup-later", 7)) return "backup";
+  return "";
+}
+function renderAppNote() {
+  const box = $("appNote"), kind = apNoteKind();
+  if (!kind) { box.innerHTML = ""; return; }
+  if (kind === "update") { box.innerHTML = `<div class="notice app-note upd"><span><b>新しい版があります。</b>開き直すと最新になります（記録は消えません）。</span><div class="wr-acts"><button class="btn small primary" type="button" data-ap-reload>開き直す</button></div></div>`; return; }
+  if (kind === "install") { box.innerHTML = `<div class="notice app-note"><span><b>ホーム画面に追加できます。</b>アプリのように開けて、通信できないところでも使えます。</span><div class="wr-acts"><button class="btn small primary" type="button" data-ap-open>方法を見る</button><button class="textbtn" type="button" data-ap-later="hub-install-later">今はしない</button></div></div>`; return; }
+  const since = apDaysSince("hub-last-backup");
+  box.innerHTML = `<div class="notice app-note"><span><b>${since == null ? "まだバックアップを書き出していません。" : `最後のバックアップから ${since} 日たちました。`}</b>記録はこの端末の中だけにあります。ときどき書き出しておくと安心です。</span><div class="wr-acts"><button class="btn small primary" type="button" data-ap-export>書き出す</button><button class="textbtn" type="button" data-ap-later="hub-backup-later">あとで</button></div></div>`;
+}
+$("appNote").addEventListener("click", (e) => {
+  if (e.target.closest("[data-ap-reload]")) { location.reload(); return; }
+  if (e.target.closest("[data-ap-open]")) { apOpen(); return; }
+  if (e.target.closest("[data-ap-export]")) { apExport(); return; }
+  const l = e.target.closest("[data-ap-later]");
+  if (l) { lsSet(l.dataset.apLater, String(Date.now())); renderAppNote(); }
+});
+function apInit() {
+  AP.on = true; $("openApp").hidden = false;
+  $("sPrivNote").textContent = "教材と学習の記録はこの端末の中だけに保存され、どこにも送られません。端末を替えるときは「保存」からバックアップを書き出してください。";
+  HubPWA.onUpdate(() => { AP.update = true; renderAppNote(); });
+  HubPWA.onInstallChange(() => { renderAppNote(); if ($("appDlg").open) renderApp(); });
+  if (HubPWA.isStandalone()) HubPWA.persist(); // ホーム画面から開いたときは、黙って「消されにくく」を頼む
+  const msg = lsGet("hub-restored", "");
+  if (msg) { try { localStorage.removeItem("hub-restored"); } catch (e) {} toast(msg); }
+}
+
+/* =========================================================
    Boot
    ========================================================= */
 function updateBadge() { const c = counts(); const n = c.due + c.learn + c.newLeft + c.fix + c.phr; $("dueBadge").textContent = S.loadedUser && n ? String(n) : ""; if (curTab === "today") renderToday(); }
@@ -3676,6 +3961,8 @@ async function boot() {
   S.uid = user ? await user.id() : null;
   // 端末保存（GitHub Pages 版）のときは、教材を自分で取り込む
   if (window.claude.local && window.HubImport) { IM.on = true; $("openImport").hidden = false; $("importLinkRow").hidden = false; }
+  // 端末保存のときは、ホーム画面・保存・バックアップの画面を使う（段階4）
+  if (window.claude.local && window.HubPWA && db.dumpAll) apInit();
   // 資料の一覧と自分の記録を同時に読む（しまった資料を知ってから、章の目次を読むため）
   const srcReady = new Promise((res) => {
     let first = true;
@@ -3724,6 +4011,7 @@ async function boot() {
   // 読むタブを開いたまま起動したときは、進み具合が届いてから続きへ移動する
   if (curTab === "read" && rdMode === "read" && window.scrollY < 10) { rdNeedRestore = true; rdShownFor = ""; }
   rerenderAll();
+  renderAppNote();
 }
 boot();
 })();
