@@ -1,0 +1,21 @@
+{
+  "name": "論文リーダー学習ハブ",
+  "short_name": "論文ハブ",
+  "description": "英語論文を英語のまま読めるようになるための学習ハブ。単語と表現の間隔反復、音読・シャドーイング、要約の添削、学習時間の記録。",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "lang": "ja",
+  "dir": "ltr",
+  "background_color": "#F3F4F7",
+  "theme_color": "#F3F4F7",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

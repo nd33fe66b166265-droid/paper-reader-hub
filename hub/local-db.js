@@ -21,6 +21,13 @@
    sample（添削で Claude を呼ぶ部品）は null。端末版の添削は relay.js の「コピー＆貼り付け」の往復を使う（段階3）。
 
    保存の形: データベース "paper-reader-hub"、入れ物 "docs"、1件 = { col: コレクション, id, data }。
+
+   バックアップ用（段階4。ハブ本体の claude.ai 版には無い操作）:
+     db.dumpAll()          → [{ col, id, data }]  … 全部を1つの読み取りで取り出す（col, id の順）
+     db.replaceAll(rows)   … 全部を消して rows に置き換える。1つの書き込みの中で行うので、途中で失敗したら元のまま
+     db.freeze()           … 以後の set / update / delete を何もせずに成功扱いにする（戻す直前に、
+                              画面に残った古い記録が戻した記録を上書きしないため。開き直すまで続く）
+   replaceAll が終わると、同じ端末の他のタブにも知らせる（他のタブは freeze して開き直す）。
    ========================================================= */
 (function (root) {
   "use strict";
@@ -73,7 +80,11 @@
         if (set) set.forEach(function (fn) { fn(); });
         if (!remote && chan) try { chan.postMessage(col); } catch (e) { /* 他のタブへは届かなくてよい */ }
       }
-      if (chan) chan.onmessage = function (ev) { if (typeof ev.data === "string") notify(ev.data, true); };
+      var frozen = false;
+      if (chan) chan.onmessage = function (ev) {
+        if (typeof ev.data === "string") notify(ev.data, true);
+        else if (ev.data && ev.data.t === "replaced") { frozen = true; if (opts.onReplaced) opts.onReplaced(); else if (root && root.location && root.document) root.location.reload(); }
+      };
 
       function tx(mode, fn) {
         return new Promise(function (res, rej) {
@@ -122,10 +133,12 @@
                 return readDoc(col, id).then(function (r) { return r ? docSnap(id, r.data) : { id: id, exists: false, data: function () { return null; } }; });
               },
               set: function (data) {
+                if (frozen) return Promise.resolve();
                 if (!isObj(data)) return Promise.reject(err("invalid_argument", "オブジェクトを渡してください"));
                 return tx("readwrite", function (s) { return reqP(s.put({ col: col, id: id, data: clone(data) })); }).then(function () { notify(col); });
               },
               update: function (data) {
+                if (frozen) return Promise.resolve();
                 if (!isObj(data)) return Promise.reject(err("invalid_argument", "オブジェクトを渡してください"));
                 return tx("readwrite", function (s) {
                   return reqP(s.get([col, id])).then(function (r) {
@@ -135,13 +148,38 @@
                 }).then(function () { notify(col); });
               },
               delete: function () {
+                if (frozen) return Promise.resolve();
                 return tx("readwrite", function (s) { return reqP(s.delete([col, id])); }).then(function () { notify(col); });
               },
             };
           },
         };
       }
-      return { collection: function (p) { return query(String(p), []); }, close: function () { listeners.clear(); d.close(); if (chan) chan.close(); } };
+      function dumpAll() {
+        return tx("readonly", function (s) { return reqP(s.getAll()); }).then(function (rows) {
+          return rows.map(function (r) { return { col: r.col, id: r.id, data: clone(r.data) }; })
+            .sort(function (a, b) { return a.col < b.col ? -1 : a.col > b.col ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0; });
+        });
+      }
+      function replaceAll(rows) {
+        if (!Array.isArray(rows) || !rows.every(function (r) { return r && typeof r.col === "string" && typeof r.id === "string" && isObj(r.data); }))
+          return Promise.reject(err("invalid_argument", "置き換える中身の形が違います"));
+        return tx("readwrite", function (s) {
+          return reqP(s.clear()).then(function () {
+            return Promise.all(rows.map(function (r) { return reqP(s.put({ col: r.col, id: r.id, data: clone(r.data) })); }));
+          });
+        }).then(function () {
+          if (chan) try { chan.postMessage({ t: "replaced" }); } catch (e) { /* 他のタブへは届かなくてよい */ }
+          var cols = {}; rows.forEach(function (r) { cols[r.col] = 1; }); listeners.forEach(function (_, c) { cols[c] = 1; });
+          Object.keys(cols).forEach(function (c) { notify(c, true); });
+        });
+      }
+      return {
+        collection: function (p) { return query(String(p), []); },
+        dumpAll: dumpAll, replaceAll: replaceAll,
+        freeze: function () { frozen = true; }, isFrozen: function () { return frozen; },
+        close: function () { listeners.clear(); d.close(); if (chan) chan.close(); },
+      };
     });
   }
 
@@ -151,6 +189,8 @@
     var getDb = function () { if (!dbP) dbP = createDb(opts).catch(function (e) { console.warn("IndexedDB を開けません", e); return null; }); return dbP; };
     return {
       local: true,
+      // バックアップを戻すとき、「戻す前の状態」を別のデータベースに取っておくために使う（段階4）
+      openDb: function (name) { return createDb(Object.assign({}, opts, { name: name })); },
       use: function (name) {
         if (name === "db") return getDb();
         if (name === "user") return Promise.resolve({ id: function () { return Promise.resolve("me"); } });
@@ -163,4 +203,5 @@
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   // claude.ai の中で開いたとき（本物の window.claude があるとき）は何もしない
   if (root && root.document && !root.claude) root.claude = createLocalClaude();
+  if (root && root.document) root.HubLocalDb = api;
 })(typeof window !== "undefined" ? window : typeof globalThis !== "undefined" ? globalThis : this);
