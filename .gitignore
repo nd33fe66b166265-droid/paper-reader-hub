@@ -1,0 +1,15 @@
+# 依存とテストの生成物
+node_modules/
+tests/fixtures/
+tests/fixtures_files/
+
+# 教材（論文・教科書の原文と訳）と個人の記録は入れない
+content/
+hub/content/
+*.hubbackup.json
+backup*.json
+units-local/
+
+# OS / エディタ
+.DS_Store
+*.swp
