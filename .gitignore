@@ -9,6 +9,7 @@ hub/content/
 *.hubbackup.json
 backup*.json
 units-local/
+migrate-work/
 
 # OS / エディタ
 .DS_Store

@@ -21,7 +21,7 @@
 
 - `docs` は端末のデータベース（`hub/local-db.js`）の中身そのもの。1件 = `{ col, id, data }`。`data` の形は `docs/hub-README.md` の 5節と同じ。
 - 使える `col` は `sources` `units` `texts` `overviews` と `data/users/<利用者>`。`data/users/<だれか>` は読み込むときに `data/users/me` に読み替える
-  （段階6で claude.ai のハブから移すときは、そちらの利用者 ID のまま書き出してよい。ただし 1 人分だけ）。
+  （段階6で claude.ai のハブから移すときは、そちらの利用者 ID のまま書き出してよい。ただし 1 人分だけ。`tools/make_backup.py` は `data/users/me` にまとめて書く。手順は `docs/migrate.md`）。
 - 読み込みの点検は `hub/pwa.js` の `parseBackup`（形・知らない入れ物・重複・`__proto__` という項目名を断る）。
 - 読み込むときは「合わせる」（段階5、おすすめ）か「置き換える」を選ぶ。どちらも、前の中身は端末の別のデータベース `paper-reader-hub-undo` に取っておき、「戻す前の状態に戻す」で戻せる。
 - `version` を上げるときは、古い版を読めるようにしておくこと（学習記録を失わないため）。
