@@ -1008,10 +1008,11 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
     <div class="ap-sec">
       <h3>バックアップ</h3>
       <p>教材と学習の記録を、1つのファイル（.hubbackup.json）に書き出します。スマホを替えるときや、ブラウザのデータを消してしまったときに、このファイルから戻せます。ファイルはこの端末の外（クラウドのドライブなど）にも置いておくと安心です。</p>
+      <p><b>パソコンとスマホの両方で使うとき</b>は、片方で書き出したファイルを、もう片方で読み込んで「合わせる」を選びます。両方の記録が1つになります（逆向きにもすると、2台が同じになります）。</p>
       <p id="apLast"></p>
       <div class="ap-row">
         <button class="btn primary" type="button" id="apExport">バックアップを書き出す</button>
-        <label class="btn" for="apFile">バックアップから戻す</label>
+        <label class="btn" for="apFile">バックアップを読み込む</label>
         <input type="file" id="apFile" accept=".json,application/json" hidden>
       </div>
       <div id="apResult" aria-live="polite"></div>
@@ -1036,6 +1037,8 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
 <script src="relay.js"></script>
 <!-- アプリにする部品（Service Worker・ホーム画面・保存・バックアップの読み書き） -->
 <script src="pwa.js"></script>
+<!-- 2台の記録を合わせる（バックアップを読み込むとき） -->
+<script src="merge.js"></script>
 <script>
 /* =========================================================
    論文リーダー学習ハブ — コードの地図（引き継ぎ用）
@@ -3705,10 +3708,11 @@ $("imList").addEventListener("click", async (e) => {
 /* =========================================================
    App（段階4: ホーム画面・保存・バックアップ。端末保存のときだけ）
    ---------------------------------------------------------
-   部品は pwa.js（HubPWA）と local-db.js（dumpAll / replaceAll / freeze）。ここは画面だけ。
+   部品は pwa.js（HubPWA）・merge.js（HubMerge）と local-db.js（dumpAll / replaceAll / freeze）。ここは画面だけ。
    - 書き出し: 画面に残った記録を書き終えてから、データベースの中身を全部 1 つの JSON にする
-   - 戻す: ファイルを点検 → 中身の数を見せて確かめる → 今の中身を「戻す前の状態」として別の
-     データベース（paper-reader-hub-undo）に取っておく → 置き換える → 開き直す
+   - 読み込む: ファイルを点検 → 中身の数を見せて「合わせる」か「置き換える」かを選んでもらう → 今の中身を
+     「戻す前の状態」として別のデータベース（paper-reader-hub-undo）に取っておく → 合わせる（段階5: merge.js の
+     HubMerge.merge）か置き換える → 開き直す
      置き換える前に、この画面からの書き込みを止める（S.canSave と db.freeze）。止めないと、
      画面に残った古い記録が、開き直す直前（pagehide）に戻した記録を上書きしてしまう。
    - 今日の画面の知らせ: 新しい版 ＞ ホーム画面への追加 ＞ バックアップのすすめ（1つだけ出す）
@@ -3745,7 +3749,7 @@ function renderApp() {
   $("apLast").innerHTML = last ? `最後に書き出したのは <b>${esc(apFmtTime(last))}</b> です。` : `<b>まだ書き出していません。</b>`;
   const undoAt = +lsGet("hub-undo-at", "0");
   $("apUndoRow").hidden = !undoAt;
-  $("apUndoText").textContent = undoAt ? `${apFmtTime(undoAt)} にバックアップから戻しました。` : "";
+  $("apUndoText").textContent = undoAt ? `${apFmtTime(undoAt)} にバックアップを読み込みました。` : "";
   $("apExport").disabled = AP.busy;
   renderApStore(); renderApResult();
 }
@@ -3758,7 +3762,7 @@ function apInstallHtml() {
   else if (pf === "android") steps = `<ol class="ap-steps"><li>Chrome の右上の<b>︙</b>（メニュー）を押す</li><li><b>「ホーム画面に追加」</b>か<b>「アプリをインストール」</b>を押す</li><li><b>「インストール」</b>（または「追加」）を押す</li></ol>`;
   else steps = `<p>Chrome や Edge では、アドレスバーの右にある<b>インストール</b>のボタンから追加できます。</p>`;
   const share = pf === "ios"
-    ? `<p><b>iPhone・iPad では、Safari とホーム画面のアプリは記録を別々に持ちます。</b>Safari で学習した記録や取り込んだ教材は、先にここで「バックアップを書き出す」をして、ホーム画面のアプリで「バックアップから戻す」をすると移せます。</p>`
+    ? `<p><b>iPhone・iPad では、Safari とホーム画面のアプリは記録を別々に持ちます。</b>Safari で学習した記録や取り込んだ教材は、先にここで「バックアップを書き出す」をして、ホーム画面のアプリで「バックアップを読み込む」をすると移せます。</p>`
     : `<p>ホーム画面のアプリと、このブラウザのページは、同じ記録を使います。</p>`;
   return `<h3>ホーム画面に追加 <span class="ap-state warn">まだです</span></h3><p>ホーム画面に追加すると、アプリのように全画面で開けて、通信できないところ（機内モードなど）でも使えます。${pf === "ios" ? "しばらく開かなかったときに、ブラウザが保存を消す心配もなくなります。" : ""}</p>${steps}${share}`;
 }
@@ -3834,37 +3838,59 @@ $("apFile").addEventListener("change", async (e) => {
 async function apCheck(text, name) {
   const r = HubPWA.parseBackup(text);
   if (!r.ok) { AP.pending = null; AP.err = r.error; renderApResult(); return; }
-  let cur = null;
-  try { await saveAllNow(); cur = HubPWA.summarize(await S.db.dumpAll()); } catch (e) { cur = null; }
-  AP.pending = { rows: r.rows, info: r.info, cur, name, undo: false }; AP.err = "";
+  let cur = null, merged = null;
+  try {
+    await saveAllNow();
+    const rows = await S.db.dumpAll();
+    cur = HubPWA.summarize(rows);
+    const m = HubMerge.merge(rows, r.rows);
+    merged = { counts: HubPWA.summarize(m.rows), report: m.report };
+  } catch (e) { console.warn("backup check", e); cur = null; merged = null; }
+  AP.pending = { rows: r.rows, info: r.info, cur, merged, name, undo: false }; AP.err = "";
   renderApResult();
 }
 function renderApResult() {
   const box = $("apResult");
-  if (AP.broken) { box.innerHTML = `<p class="ap-err">戻せませんでした。今の中身はそのままです。「開き直す」を押してから、もう一度試してください。</p><div class="ap-row"><button class="btn small" type="button" data-ap-reload>開き直す</button></div>`; return; }
+  if (AP.broken) { box.innerHTML = `<p class="ap-err">読み込めませんでした。今の中身はそのままです。「開き直す」を押してから、もう一度試してください。</p><div class="ap-row"><button class="btn small" type="button" data-ap-reload>開き直す</button></div>`; return; }
   if (AP.err) { box.innerHTML = `<p class="ap-err">${esc(AP.err)}</p>`; return; }
   const P0 = AP.pending;
   if (!P0) { box.innerHTML = ""; return; }
-  const b = P0.info.counts, c = P0.cur;
-  const row = (k, x, y) => `<tr><th>${k}</th><td>${x}</td><td>${c ? y : "?"}</td></tr>`;
+  const b = P0.info.counts, c = P0.cur, mg = !P0.undo && c ? P0.merged : null, g = mg && mg.counts;
+  const row = (k, x, y, z) => `<tr><th>${k}</th><td>${x}</td><td>${c ? y : "?"}</td>${mg ? `<td>${z}</td>` : ""}</tr>`;
   const fewer = c && b.cards < c.cards;
+  const btns = (mg ? `<button class="btn primary" type="button" id="apMerge"${AP.busy ? " disabled" : ""}>合わせる</button><button class="btn" type="button" id="apGo"${AP.busy ? " disabled" : ""}>置き換える</button>`
+    : `<button class="btn primary" type="button" id="apGo"${AP.busy ? " disabled" : ""}>置き換える</button>`)
+    + `<button class="btn" type="button" id="apCancel"${AP.busy ? " disabled" : ""}>やめる</button>`;
+  const rp = mg && mg.report;
+  const what = rp ? [
+    rp.cardsAdded ? `バックアップにしか無い復習カード ${rp.cardsAdded} 枚を足します。` : "",
+    rp.cardsNewer ? `バックアップの方が後に学習した復習カード ${rp.cardsNewer} 枚は、そちらに合わせます。` : "",
+    rp.cardsAdded || rp.cardsNewer ? "" : "復習カードは、今の端末の方が新しいか同じです。",
+    rp.unitsAdded ? `教材の章を ${rp.unitsAdded} 個足します。` : "",
+    rp.unitsDiffer ? `両方にあって中身が違う章が ${rp.unitsDiffer} 個あります。今の端末の方を残します（新しい方を使いたいときは、その章のファイルを取り込み直してください）。` : "",
+    rp.shiftFixed ? `「復習しなかった日」として後ろへずらしていたカードのうち、もう片方の端末で復習していた日の分 ${rp.shiftFixed} 枚の期日を戻します。` : "",
+  ].filter(Boolean).join("<br>") : "";
   box.innerHTML = `<div class="ap-confirm">
-    <b>${P0.undo ? "戻す前の状態" : "このバックアップ"}で、今の端末の中身を置き換えますか？</b>
-    <table><tr><th></th><td><b>${P0.undo ? "戻す前の状態" : "バックアップ"}</b></td><td><b>今の端末</b></td></tr>
-    ${row("書き出した日時", esc(apFmtTime(Date.parse(P0.info.exportedAt))), "")}
-    ${c ? row("教材の章", b.units, c.units) + row("復習カード", b.cards + " 枚", c.cards + " 枚") + row("学習時間の記録", b.days + " 日", c.days + " 日") + row("手入力の学習記録", b.logs + " 件", c.logs + " 件") : ""}
-    </table>
-    ${fewer ? `<p class="ap-err">${P0.undo ? "" : "バックアップの方が、"}復習カードが今より少なくなります。古いバックアップでないか確かめてください。</p>` : ""}
-    <p class="note" style="margin:0">今の中身は消さずに「戻す前の状態」としてこの端末に取っておくので、あとから「戻す前の状態に戻す」で元に戻せます。置き換えたあと、アプリを開き直します。</p>
-    <div class="ap-row"><button class="btn primary" type="button" id="apGo"${AP.busy ? " disabled" : ""}>置き換える</button><button class="btn" type="button" id="apCancel"${AP.busy ? " disabled" : ""}>やめる</button></div>
+    <b>${P0.undo ? "戻す前の状態で、今の端末の中身を置き換えますか？" : mg ? "このバックアップを、今の端末の記録と合わせますか？" : "このバックアップで、今の端末の中身を置き換えますか？"}</b>
+    <span class="hint">${P0.undo ? "取っておいた" : "書き出した"}日時: ${esc(apFmtTime(Date.parse(P0.info.exportedAt)))}</span>
+    ${c ? `<table><tr><th></th><td><b>${P0.undo ? "戻す前" : "バックアップ"}</b></td><td><b>今の端末</b></td>${mg ? "<td><b>合わせた後</b></td>" : ""}</tr>
+    ${row("教材の章", b.units, c.units, g && g.units) + row("復習カード", b.cards, c.cards, g && g.cards) + row("学習時間（日）", b.days, c.days, g && g.days) + row("手入力の記録", b.logs, c.logs, g && g.logs)}
+    </table>` : ""}
+    ${mg ? `<p class="note" style="margin:0"><b>合わせる</b>（おすすめ）: 両方の記録を1つにします。カードはそれぞれ最後に学習した方を使い、学習時間・手入力の記録・要約は両方を残します。設定はこの端末のままです。<br>${what}</p>
+    <p class="note" style="margin:0"><b>置き換える</b>: この端末の中身を捨てて、バックアップと同じにします（スマホを替えたときなど）。</p>` : ""}
+    ${fewer && !mg ? `<p class="ap-err">${P0.undo ? "" : "バックアップの方が、"}復習カードが今より少なくなります。古いバックアップでないか確かめてください。</p>` : ""}
+    ${fewer && mg ? `<p class="ap-err">置き換えると、復習カードが今より少なくなります。2台の記録を1つにしたいときは「合わせる」を選んでください。</p>` : ""}
+    <p class="note" style="margin:0">今の中身は消さずに「戻す前の状態」としてこの端末に取っておくので、あとから「戻す前の状態に戻す」で元に戻せます。${mg ? "どちらを選んでも、" : "置き換えたあと、"}アプリを開き直します。</p>
+    <div class="ap-row">${btns}</div>
   </div>`;
 }
 $("apResult").addEventListener("click", (e) => {
   if (e.target.closest("[data-ap-reload]")) { location.reload(); return; }
   if (e.target.closest("#apCancel")) { AP.pending = null; renderApResult(); return; }
-  if (e.target.closest("#apGo")) apApply();
+  if (e.target.closest("#apMerge")) { apApply("merge"); return; }
+  if (e.target.closest("#apGo")) apApply("replace");
 });
-async function apApply() {
+async function apApply(mode) {
   const P0 = AP.pending;
   if (!P0 || AP.busy) return;
   AP.busy = true; renderApResult();
@@ -3874,11 +3900,15 @@ async function apApply() {
     const cur = await S.db.dumpAll();
     const undo = await window.claude.openDb(AP_UNDO_DB);
     if (!undo) throw new Error("戻す前の状態を取っておけません");
+    // 合わせるときは、書き込みを止めた後の今の中身で合わせ直す（確かめの表を出した後の学習も入れる）
+    const merged = mode === "merge" && !P0.undo ? HubMerge.merge(cur, P0.rows) : null;
     try { await undo.replaceAll(cur); } finally { undo.close(); }
-    await S.db.replaceAll(P0.rows);
+    await S.db.replaceAll(merged ? merged.rows : P0.rows);
     lsSet("hub-undo-at", String(Date.now()));
-    const c = P0.info.counts;
-    lsSet("hub-restored", P0.undo ? "戻す前の状態に戻しました。" : `バックアップから戻しました（章 ${c.units}・復習カード ${c.cards} 枚）。`);
+    const c = merged ? HubPWA.summarize(merged.rows) : P0.info.counts;
+    lsSet("hub-restored", P0.undo ? "戻す前の状態に戻しました。"
+      : merged ? `記録を合わせました（章 ${c.units}・復習カード ${c.cards} 枚。バックアップから ${merged.report.cardsAdded + merged.report.cardsNewer} 枚）。`
+      : `バックアップから戻しました（章 ${c.units}・復習カード ${c.cards} 枚）。`);
   } catch (e) {
     console.warn("backup restore", e);
     AP.busy = false; AP.broken = true; renderApResult();

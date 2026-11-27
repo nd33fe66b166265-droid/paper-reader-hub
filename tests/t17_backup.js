@@ -11,6 +11,7 @@ const { IDBFactory } = require("fake-indexeddb");
 const H = require("./harness");
 const L = require("../hub/local-db.js");
 const PWA_SRC = fs.readFileSync(path.join(__dirname, "..", "hub", "pwa.js"), "utf8");
+const MERGE_SRC = fs.readFileSync(path.join(__dirname, "..", "hub", "merge.js"), "utf8");
 const fix = H.loadFixtures();
 const fail = [], errs = [];
 const ok = (c, m) => { if (!c) fail.push(m); };
@@ -22,7 +23,7 @@ function start(idb, opts = {}) {
     fix, localStorage: opts.ls || {},
     beforeParse(w) {
       w.claude = L.createLocalClaude({ indexedDB: idb });
-      w.eval(PWA_SRC); // jsdom は <script src> を読まないので、pwa.js をここで動かす
+      w.eval(PWA_SRC); w.eval(MERGE_SRC); // jsdom は <script src> を読まないので、pwa.js と merge.js をここで動かす
       w.URL.createObjectURL = (b) => { out.blobs.push(b); return "blob:test"; };
       w.URL.revokeObjectURL = () => {};
       if (opts.standalone) w.matchMedia = (q) => ({ matches: /standalone/.test(q), addEventListener() {} });
@@ -128,7 +129,8 @@ const cardsOf = (rows) => rows.filter((r) => r.col === "data/users/me" && r.id.s
   ok(cardsOf(beforeB) === 0, "端末B に初めから復習カードがある");
   await t.pick("paper-reader-hub-2026-11-27.hubbackup.json", text);
   const conf = t.$("apResult").textContent;
-  ok(t.$("apGo") && /置き換えますか/.test(conf) && conf.includes(cardsA + " 枚") && conf.includes("0 枚"), "確かめの表が出ない: " + conf);
+  ok(t.$("apGo") && t.$("apMerge") && /合わせますか/.test(conf) && conf.includes("復習カード" + cardsA + "0" + cardsA), "確かめの表が出ない: " + conf);
+  ok(/合わせた後/.test(conf) && /置き換える/.test(conf), "合わせる・置き換えるの説明が無い: " + conf);
   t.click(t.$("apGo"));
   await delay(400);
   const rowsB = await dump(idbB);
