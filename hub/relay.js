@@ -55,7 +55,7 @@
     const raw = String(text == null ? "" : text).replace(/^﻿/, "").trim();
     if (!raw) return { ok: false, msg: "返事が空です。Claude の返事を全部コピーして、ここに貼ってください。" };
     // 依頼文そのものを貼ってしまった
-    if (/# 出力\s*\n次の形のJSONだけを返す/.test(raw) || /# 学習者の要約/.test(raw)) {
+    if (/# 出力\s*\n次の形のJSON/.test(raw) || /# 学習者の要約/.test(raw)) {
       return { ok: false, msg: "貼ったのは依頼文のようです。依頼文を Claude に送ったあと、Claude の「返事」のほうをコピーして貼ってください。" };
     }
     // ```json … ``` で囲まれていれば、その中を使う

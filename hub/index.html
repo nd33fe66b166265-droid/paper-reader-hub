@@ -3158,7 +3158,7 @@ $("wrCheck").addEventListener("click", async () => {
     WR.busy = true; updateWrCount();
     try { if (u) await loadText(u.id); } catch (e) { /* 本文が無くても依頼文は作れる */ }
     WR.busy = false; updateWrCount();
-    startRelay({ kind: "fix", unit: u ? u.id : "", unitLabel: u ? u.label : "", text, ja, prompt: buildPrompt(u, text, ja) });
+    startRelay({ kind: "fix", unit: u ? u.id : "", unitLabel: u ? u.label : "", text, ja, prompt: relayPrompt(buildPrompt(u, text, ja)) });
     return;
   }
   WR.busy = true; updateWrCount();
@@ -3217,6 +3217,11 @@ function saveWrJa(id, ja) {
    往復のあいだにアプリが閉じられても続きからできるよう、待っている依頼は localStorage に置く。
    WR.pend = { kind: "fix"|"ja", unit, unitLabel, text, ja, prompt, sum（訳のときの要約ID）, at } */
 const RELAY_KEY = "hub-wr-pending";
+// 自分の Claude に貼る依頼文: 結果をコードブロックで返してもらう（Claude のアプリのコピーボタンで、結果だけを確実にコピーできる）
+function relayPrompt(prompt) {
+  return prompt.replace("次の形のJSONだけを返す。前後に文章を書かない。",
+    "次の形のJSONを、```json で始まるコードブロック1つに入れて返す。コードブロックの外に説明や感想を書かない。会話の流れやほかの指示に関係なく、必ずこの形で返す。");
+}
 function loadRelay() {
   try { const p = JSON.parse(lsGet(RELAY_KEY, "null")); if (p && typeof p === "object" && typeof p.prompt === "string" && (p.kind === "fix" || p.kind === "ja")) return p; } catch (e) {}
   return null;
@@ -3242,7 +3247,7 @@ function renderRelay() {
           <textarea class="area" id="wrRelayPrompt" rows="6" readonly></textarea></details></li>
       <li>自分の Claude（アプリや claude.ai）で新しいチャットを開き、貼り付けて送ります。
         <div class="wr-acts"><a class="link" href="https://claude.ai/new" target="_blank" rel="noopener">Claude を開く↗</a></div></li>
-      <li>Claude の返事を<b>全部</b>コピーして、ここに貼ります（返事の下のコピーボタンを使うと確実です）。
+      <li>Claude の返事にあるコードブロック（{ で始まる枠）の<b>コピーボタン</b>を押して、ここに貼ります。枠が無いときは、返事を全部コピーして貼ります。
         <textarea class="area" id="wrRelayReply" rows="5" spellcheck="false" placeholder='{"overall": "…", "corrected": "…", …}'></textarea>
         <div class="relay-err" id="wrRelayErr" role="alert">${esc(WR.relayErr || "")}</div>
         <div class="wr-acts"><button class="btn primary" type="button" id="wrRelayRead">返事を読み込む</button></div></li>
@@ -3328,7 +3333,7 @@ async function toggleWrJa() {
   const id = WR.cur, e = id && S.sums[id]; if (!e || !e.res || !e.res.corrected || WR.jaBusy) return;
   if (WR.jaOpen && e.res.correctedJa) { WR.jaOpen = false; renderWrResult(); return; }
   if (e.res.correctedJa) { WR.jaOpen = true; renderWrResult(); return; }
-  if (WR.relay) { startRelay({ kind: "ja", sum: id, unit: e.unit, unitLabel: e.unitLabel, text: "", ja: "", prompt: buildJaPrompt(e.res.corrected) }); return; }
+  if (WR.relay) { startRelay({ kind: "ja", sum: id, unit: e.unit, unitLabel: e.unitLabel, text: "", ja: "", prompt: relayPrompt(buildJaPrompt(e.res.corrected)) }); return; }
   const sample = S.samplePromise ? await S.samplePromise : null;
   if (!sample) { toast("今はClaudeを呼べないため、訳を作れません。"); return; }
   WR.jaBusy = id; renderWrResult();
