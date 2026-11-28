@@ -89,6 +89,7 @@ const paste = (t, s) => { const ta = t.$("wrRelayReply"); ta.value = s; ta.dispa
   ok(!t.$("wrRelay").hidden, "添削するを押しても往復の欄が出ない");
   const prompt = t.$("wrRelayPrompt") && t.$("wrRelayPrompt").value;
   ok(prompt && prompt.includes(SUMMARY) && prompt.includes('"corrected_ja"') && prompt.includes(U.label), "依頼文に要約・章・訳の依頼が無い");
+  ok(!/電気|電子工学|回路/.test(prompt), "依頼文に特定の専攻・分野の言葉がある（どの分野の人にも使えるように）");
   ok(prompt.includes("```json で始まるコードブロック1つに入れて返す") && !prompt.includes("次の形のJSONだけを返す"), "依頼文でコードブロックを頼んでいない");
   t.$("wrRelayCopy").click(); await delay(20);
   ok(copied === prompt, "依頼文をコピーできない");
@@ -157,6 +158,7 @@ const paste = (t, s) => { const ta = t.$("wrRelayReply"); ta.value = s; ta.dispa
   t.click(t.$("wrJaBtn")); await delay(50);
   ok(!t.$("wrRelay").hidden && t.$("wrRelayPrompt").value.includes(OLD_EN) && t.$("wrRelayPrompt").value.includes('"ja": "日本語訳"'), "訳の依頼文が出ない");
   ok(t.$("wrRelayPrompt").value.includes("コードブロック1つに入れて返す"), "訳の依頼文でコードブロックを頼んでいない");
+  ok(!/電気|電子工学|回路/.test(t.$("wrRelayPrompt").value), "訳の依頼文に特定の専攻・分野の言葉がある");
   paste(t, t.$("wrRelayPrompt").value); await delay(30);
   ok(/依頼文/.test(t.$("wrRelayErr").textContent), "訳の依頼文を貼ったことを知らせない");
   paste(t, JSON.stringify(GOOD)); await delay(50);
