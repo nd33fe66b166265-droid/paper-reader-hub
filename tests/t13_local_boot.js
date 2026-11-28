@@ -41,6 +41,8 @@ async function userDocs() {
   ok(/教材を取り込むと/.test(t.$("reviewArea").textContent), "空の復習の案内が端末版の言い方でない: " + t.$("reviewArea").textContent);
   const howto = t.$("importDlg").querySelector('a[href$="/prompts/README.md"]');
   ok(howto && howto.getAttribute("rel") === "noopener", "教材ダイアログに教材の作り方への案内が無い");
+  const terms = t.$("settings").querySelector('a[href$="/docs/terms.md"]');
+  ok(terms && terms.getAttribute("rel") === "noopener", "設定に利用規約への案内が無い");
   await t.stop();
   if (process.argv[2] === "empty") return done();
 

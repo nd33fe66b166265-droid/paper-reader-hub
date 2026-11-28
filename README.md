@@ -3,7 +3,7 @@
 英語の論文を「英語のまま読む」練習のための、スマホ向け学習アプリ（PWA）です。
 自分の AI に作ってもらった章の教材を取り込み、**読む → 単語と表現を復習する → 英語で要約して添削してもらう**を毎日くり返せます。
 
-**アプリ: https://maitona.github.io/paper-reader-hub/** ・ [使い方](docs/usage.md) ・ [教材の作り方](prompts/README.md)
+**アプリ: https://maitona.github.io/paper-reader-hub/** ・ [使い方](docs/usage.md) ・ [教材の作り方](prompts/README.md) ・ [利用規約と注意事項](docs/terms.md)
 
 > **In English:** A mobile-first, offline-capable PWA for learning to read English research papers. Users generate chapter
 > data (sentences, literal translations, grammar notes, vocabulary, reusable academic phrases) with their own AI, import it,
@@ -94,6 +94,11 @@ npm ci
 python3 gen_fixtures.py                    # テスト用の教材（意味の無い語）を作る
 HUB=$PWD/../hub/index.html sh run_all.sh   # 28 本
 ```
+
+## ライセンスと注意
+
+ソースコードは [MIT ライセンス](LICENSE) です。アプリを使うときの約束ごと（記録の保存、外部のサービス、教材の著作権など）は
+[利用規約と注意事項](docs/terms.md) にまとめています。
 
 ## 作った人
 
