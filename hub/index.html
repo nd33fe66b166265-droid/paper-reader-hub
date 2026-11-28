@@ -756,7 +756,7 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
             <input class="field" id="lgMin" type="number" min="1" max="600" step="1" inputmode="numeric" placeholder="25">
           </label>
           <label class="full">メモ（任意）
-            <input class="field" id="lgMemo" type="text" maxlength="200" placeholder="例：Iizuka 2024 III-A を読んだ／研究の説明を3回練習">
+            <input class="field" id="lgMemo" type="text" maxlength="200" placeholder="例：論文の II-A を読んだ／発表の練習を3回">
           </label>
           <button class="btn primary" type="submit" id="lgAdd">記録する</button>
         </form>
@@ -985,9 +985,10 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
       <input type="file" id="imFile" multiple accept=".txt,.json,text/plain,application/json" hidden>
       <button class="textbtn" type="button" id="imSample">見本で試す</button>
     </div>
+    <p class="note" style="margin:6px 0 0">章のデータファイルの作り方: <a class="link" href="https://github.com/maitona/paper-reader-hub/blob/main/prompts/README.md" target="_blank" rel="noopener">教材づくりプロンプトと手順</a></p>
     <details class="im-paste" id="imPasteBox">
       <summary>文字を貼り付けて取り込む</summary>
-      <textarea class="area" id="imPaste" rows="7" spellcheck="false" placeholder="id: xu2019-2a&#10;source: xu2019&#10;label: …&#10;toc: …&#10;&#10;---&#10;sec: …&#10;en: …"></textarea>
+      <textarea class="area" id="imPaste" rows="7" spellcheck="false" placeholder="id: smith2021-2a&#10;source: smith2021&#10;label: …&#10;toc: …&#10;&#10;---&#10;sec: …&#10;en: …"></textarea>
       <button class="btn small" type="button" id="imPasteGo">点検する</button>
     </details>
     <div id="imResult" aria-live="polite"></div>
@@ -1938,7 +1939,7 @@ function prefetchQueue() {
 function renderReview() {
   const area = $("reviewArea");
   if (!S.loadedUnits || !S.loadedUser) { area.innerHTML = `<div class="notice">読み込んでいます…</div>`; return; }
-  if (!S.words.size && !S.phrases.size && !Object.keys(S.fixes).length && !archPending()) { area.innerHTML = `<div class="notice"><b>単語がまだありません。</b><br>リーダーが登録されると、その英単語がここで復習できるようになります。</div>`; return; }
+  if (!S.words.size && !S.phrases.size && !Object.keys(S.fixes).length && !archPending()) { area.innerHTML = `<div class="notice"><b>単語がまだありません。</b><br>${IM.on ? "教材を取り込むと" : "リーダーが登録されると"}、その英単語がここで復習できるようになります。</div>`; return; }
   if (!session || (!session.queue.length && !session.cur)) {
     // しまった資料に今日の復習があれば、その章（目次）を読んでから始める
     const ad = archDueCounts();
