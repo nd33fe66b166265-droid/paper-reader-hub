@@ -35,7 +35,7 @@
 - 本文の HTML は必ず `sanitize()`、図は `sanitizeSvg()` を通す。取り込むファイルも外から来たものとして扱う。
 - API キーや秘密の値をコードに書かない（そもそも使わない設計）。
 
-## リポジトリの中身（段階6の時点）
+## リポジトリの中身（段階7の時点）
 
 | 場所 | 中身 |
 |---|---|
@@ -49,13 +49,15 @@
 | `hub/manifest.webmanifest`・`hub/icons/` | 段階4: ホーム画面のアプリの名前とアイコン（`tools/make_icons.py` で作る） |
 | `hub/samples/` | 「見本で試す」の章ファイルと全体図。**自作の英文**（論文の引用ではない） |
 | `.github/workflows/pages.yml` | push / PR でテスト、main なら `hub/` を GitHub Pages に公開 |
-| `tests/` | jsdom の自動テスト 28 本（`run_all.sh`。t12/t13 が端末保存の部品、t14 が教材の取り込み、t15 が書くタブの往復、t16 が PWA の部品と sw.js、t17 がバックアップの画面、t18 が2台の記録を合わせる、t19 が claude.ai からの移行）。`harness.js` の `makeDb` が `window.claude.use("db")` の偽物で、**端末保存の部品を作るときの手本になる** |
+| `tests/` | jsdom の自動テスト 28 本（`run_all.sh`。t12/t13 が端末保存の部品（と段階7の端末版の案内）、t14 が教材の取り込み、t15 が書くタブの往復、t16 が PWA の部品と sw.js、t17 がバックアップの画面、t18 が2台の記録を合わせる、t19 が claude.ai からの移行）。`harness.js` の `makeDb` が `window.claude.use("db")` の偽物で、**端末保存の部品を作るときの手本になる** |
 | `tools/` | claude.ai 側で章を組み立てる Python（`build_unit.py`）と点検（`check_hub_data.py`）、全体図の見本（`ov_build_example.py`）。段階2で `hub/import.js` に移した（Python 版は比較用に残す）。段階6の `make_backup.py` は claude.ai のハブの写し（データベース＋同梱ファイル）からバックアップを作る（手順は `docs/migrate.md`、t19 が確かめる） |
 | `docs/hub-README.md` | 現在のハブの引き継ぎ資料（機能・データの形・コードの地図・守ること）。**4〜6節は必読** |
 | `docs/prompt-v7.md` | 現在の生成プロンプト（教材の作り方。章のデータファイルの書式は 5節） |
 | `docs/PLAN.md` | 作り替えの計画と段階 |
 | `docs/backup-format.md` | 段階4: バックアップのファイルの形（段階6の移行でも使う）。段階5の「合わせる」の決まり |
 | `docs/migrate.md` | 段階6: claude.ai のハブから教材と記録を移す手順と切り替え日の考え方 |
+| `prompts/` | 段階7: 他の人も使える教材づくりプロンプト（`paper-reader-prompt.md`。v7 から「ファイルを渡してアプリで取り込む」形にしたもの）と、その使い方（`README.md`）。アプリの「教材」ダイアログからリンクしている |
+| `docs/usage.md`・`docs/images/` | 段階7: アプリの使い方と、README の画面写真（見本の教材で `tools/screenshots.js` が撮る。自作の英文だけ） |
 
 ## テストの動かし方
 

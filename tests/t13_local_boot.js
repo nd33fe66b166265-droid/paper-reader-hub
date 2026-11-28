@@ -6,6 +6,7 @@
 const { IDBFactory } = require("fake-indexeddb");
 const H = require("./harness");
 const L = require("../hub/local-db.js");
+const I = require("../hub/import.js");
 const fix = H.loadFixtures();
 const idb = new IDBFactory();
 const fail = [], errs = [];
@@ -13,7 +14,7 @@ const ok = (c, m) => { if (!c) fail.push(m); };
 const delay = H.delay;
 
 function start() {
-  const t = H.startHub({ fix, beforeParse(w) { w.claude = L.createLocalClaude({ indexedDB: idb }); } });
+  const t = H.startHub({ fix, beforeParse(w) { w.claude = L.createLocalClaude({ indexedDB: idb }); w.HubImport = I; } });
   t.w.addEventListener("error", (e) => errs.push(e.message));
   t.stop = async () => { const db = await t.w.claude.use("db"); if (db) db.close(); t.w.close(); };
   return t;
@@ -35,6 +36,11 @@ async function userDocs() {
   await delay(500);
   ok(/まだ(リーダー|教材)が登録されていません/.test(t.w.document.body.textContent), "空のとき教材が無い案内が出ない");
   ok(!/データに接続できません|データベースを使えません|保存できない状態/.test(t.$("statusNote").textContent), "空の起動で接続できない表示: " + t.$("statusNote").textContent);
+  // 段階7: 端末版の案内は「教材を取り込む」の言い方。教材の作り方（prompts/）への道がある
+  t.$("tab-review").click(); await delay(50);
+  ok(/教材を取り込むと/.test(t.$("reviewArea").textContent), "空の復習の案内が端末版の言い方でない: " + t.$("reviewArea").textContent);
+  const howto = t.$("importDlg").querySelector('a[href$="/prompts/README.md"]');
+  ok(howto && howto.getAttribute("rel") === "noopener", "教材ダイアログに教材の作り方への案内が無い");
   await t.stop();
   if (process.argv[2] === "empty") return done();
 
