@@ -3,7 +3,7 @@
 **読みたい論文が、そのまま英語の教材になる。**
 英語の論文を「訳に頼らず、英語のまま読める」ようになるための、スマホ向けの学習アプリです。
 
-**[アプリを開く](https://maitona.github.io/paper-reader-hub/)** ・ [使い方](docs/usage.md) ・ [教材の作り方](prompts/README.md) ・ [利用規約と注意事項](docs/terms.md)
+**[アプリを開く](https://maitona.github.io/paper-reader-hub/)** ・ [使い方](docs/usage.md) ・ [教材の作り方](prompts/README.md) ・ [利用規約と注意事項](docs/terms.md) ・ [更新履歴](CHANGELOG.md)
 
 ## こんな人のためのアプリです
 

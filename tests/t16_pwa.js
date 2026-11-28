@@ -53,6 +53,14 @@ function files() {
   // ダークモードでは上下の帯（状態バー）も暗い色にする
   ok(/<meta name="theme-color" media="\(prefers-color-scheme: dark\)" content="#131419">/.test(html) && /<meta name="theme-color" media="\(prefers-color-scheme: light\)"/.test(html), "theme-color がダークモードに合わせていない");
   ["sw.js", "pwa.js"].forEach((f) => ok(/"__BUILD__"/.test(fs.readFileSync(path.join(HUB, f), "utf8")), f + " に版の印 __BUILD__ が無い"));
+  // 版の番号は CHANGELOG.md の先頭の版と同じ。「保存」から更新履歴に行ける
+  const ver = (fs.readFileSync(path.join(HUB, "pwa.js"), "utf8").match(/var VERSION = "(\d+\.\d+\.\d+)"/) || [])[1];
+  const log = fs.readFileSync(path.join(__dirname, "..", "CHANGELOG.md"), "utf8");
+  const top = (log.match(/^## (\d+\.\d+\.\d+)/m) || [])[1];
+  ok(ver && ver === top, `pwa.js の版（${ver}）と CHANGELOG.md の先頭の版（${top}）が違う`);
+  const rows = (log.match(/^\| \**\d+\.\d+\.\d+/gm) || []).length, sections = (log.match(/^## \d+\.\d+\.\d+/gm) || []).length;
+  ok(rows === sections && new RegExp("これまでの更新: " + rows + " 回").test(log) && log.includes("最新は " + top), `CHANGELOG.md の回数・表・節がそろっていない（表 ${rows}、節 ${sections}）`);
+  ok(/id="apVer"/.test(html) && /href="[^"]*\/CHANGELOG\.md"/.test(html), "「アプリの版」に版の番号か更新履歴へのリンクが無い");
   const wf = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "pages.yml"), "utf8");
   ok(/__BUILD__.*hub\/sw\.js.*hub\/pwa\.js/.test(wf), "公開のときに版の印を入れていない（pages.yml）");
   ok(/register\("sw\.js", \{ updateViaCache: "none" \}\)/.test(fs.readFileSync(path.join(HUB, "pwa.js"), "utf8")), "sw.js を毎回確かめる設定（updateViaCache）が無い");
