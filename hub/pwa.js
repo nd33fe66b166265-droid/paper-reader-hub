@@ -18,6 +18,7 @@
    ========================================================= */
 (function (root) {
   "use strict";
+  var VERSION = "1.0.0"; // 版の番号。上げたら CHANGELOG.md の先頭にも書く（t16 が確かめる）
   var BUILD = "__BUILD__"; // 公開のとき GitHub Actions がコミットの短い ID に置き換える
   var FORMAT = "paper-reader-hub-backup", FORMAT_VERSION = 1;
   var MAX_TEXT = 200 * 1024 * 1024; // これより大きいファイルは読まない（取り違え防止）
@@ -181,7 +182,7 @@
   }
 
   var api = {
-    build: build, FORMAT: FORMAT, FORMAT_VERSION: FORMAT_VERSION,
+    build: build, VERSION: VERSION, FORMAT: FORMAT, FORMAT_VERSION: FORMAT_VERSION,
     makeBackup: makeBackup, backupFileName: backupFileName, parseBackup: parseBackup, summarize: summarize,
     isStandalone: isStandalone, platform: platform,
     canPromptInstall: canPromptInstall, promptInstall: promptInstall, onInstallChange: onInstallChange,

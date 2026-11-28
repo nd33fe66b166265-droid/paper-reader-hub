@@ -1022,7 +1022,7 @@ dialog.wide { width: min(720px, calc(100vw - 16px)); max-height: calc(100dvh - 2
     </div>
     <div class="ap-sec">
       <h3>アプリの版</h3>
-      <p>版: <span class="mono" id="apBuild"></span>。通信できるときは、開くたびに最新の版を使います。表示がおかしいときは「開き直す」を押してください（記録は消えません）。</p>
+      <p>版: <span class="mono" id="apVer"></span>（<span class="mono" id="apBuild"></span>）。<a class="link" id="apLog" href="https://github.com/maitona/paper-reader-hub/blob/main/CHANGELOG.md" target="_blank" rel="noopener">更新履歴</a>。通信できるときは、開くたびに最新の版を使います。表示がおかしいときは「開き直す」を押してください（記録は消えません）。</p>
       <div class="ap-row"><button class="btn small" type="button" id="apReload">開き直す</button></div>
     </div>
   </div>
@@ -3747,6 +3747,7 @@ function renderApp() {
   if (!AP.on) return;
   $("apInstall").innerHTML = apInstallHtml();
   $("apBuild").textContent = HubPWA.build();
+  $("apVer").textContent = HubPWA.VERSION || "";
   const last = +lsGet("hub-last-backup", "0");
   $("apLast").innerHTML = last ? `最後に書き出したのは <b>${esc(apFmtTime(last))}</b> です。` : `<b>まだ書き出していません。</b>`;
   const undoAt = +lsGet("hub-undo-at", "0");
