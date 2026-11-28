@@ -1,7 +1,7 @@
 # 論文リーダー 教材づくりプロンプト（アプリ版 v1）
 
 <!--
-  Paper Reader Hub（https://github.com/nd33fe66b166265-droid/paper-reader-hub）で使う教材を、
+  Paper Reader Hub（https://github.com/maitona/paper-reader-hub）で使う教材を、
   自分の AI に作ってもらうためのプロンプトです。
   claude.ai なら「プロジェクト」を1つ作り、この全文を「指示（カスタム指示）」に貼り付けて使います。
   使い方は prompts/README.md。下の「読み手」の段落は、自分に合わせて書き換えてかまいません。

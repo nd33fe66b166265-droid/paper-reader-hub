@@ -1,6 +1,6 @@
 # 使い方
 
-アプリ: **https://nd33fe66b166265-droid.github.io/paper-reader-hub/**
+アプリ: **https://maitona.github.io/paper-reader-hub/**
 
 スマホでもパソコンでも、ブラウザで開くだけで使えます。登録やログインはありません。
 教材と学習の記録は**その端末のブラウザの中だけ**に保存され、どこにも送られません。
