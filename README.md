@@ -1,14 +1,18 @@
-# Paper Reader Hub — 論文リーダー学習ハブ
+# Paper Reader Hub（論文リーダー学習ハブ）
 
-英語の論文を「英語のまま読む」練習のための、スマホ向け学習アプリ（PWA）です。
-自分の AI に作ってもらった章の教材を取り込み、**読む → 単語と表現を復習する → 英語で要約して添削してもらう**を毎日くり返せます。
+**読みたい論文が、そのまま英語の教材になる。**
+英語の論文を「訳に頼らず、英語のまま読める」ようになるための、スマホ向けの学習アプリです。
 
-**アプリ: https://maitona.github.io/paper-reader-hub/** ・ [使い方](docs/usage.md) ・ [教材の作り方](prompts/README.md) ・ [利用規約と注意事項](docs/terms.md)
+**[アプリを開く](https://maitona.github.io/paper-reader-hub/)** ・ [使い方](docs/usage.md) ・ [教材の作り方](prompts/README.md) ・ [利用規約と注意事項](docs/terms.md)
 
-> **In English:** A mobile-first, offline-capable PWA for learning to read English research papers. Users generate chapter
-> data (sentences, literal translations, grammar notes, vocabulary, reusable academic phrases) with their own AI, import it,
-> and study with spaced repetition. No server, no login: everything lives in the browser's IndexedDB. Vanilla JS, no build step,
-> 28 jsdom tests in CI, deployed to GitHub Pages.
+## こんな人のためのアプリです
+
+- 研究室に入って、**英語の論文を読む必要が出てきた**学部生・大学院生（分野は問いません）
+- 辞書と翻訳を行ったり来たりして、**1本読むのに何日もかかってしまう**人
+- 単語帳の単語ではなく、**自分の分野の論文に出てくる言葉と言い回し**を身につけたい人
+- いずれ自分で論文や発表スライドを**英語で書く**ことになる人
+
+英語の力は、中級（TOEIC 600〜700 点くらい）を想定しています。
 
 <p>
   <img src="docs/images/read-light.png" width="200" alt="読む画面: 英文の下に訳と構文解説を開いたところ">
@@ -19,15 +23,47 @@
 
 <sub>画面の英文は、このアプリのために書いた見本です（論文からの引用ではありません）。</sub>
 
+## ほかの英語学習アプリと違うところ
+
+**1. 教材は、あなたの AI が作る。アプリは学習に専念する。**
+アプリには教材が入っていません。読みたい論文の PDF を自分の AI（Claude など）に渡して、公開している[教材づくりプロンプト](prompts/paper-reader-prompt.md)で章ごとの教材にしてもらい、それをアプリに取り込みます。
+だから電気でも生物でも経済でも、**今まさに読む必要がある論文**で練習できます。教材の書き方は決まっていて、アプリが取り込む前に形を点検します。
+
+**2. API キーも、サーバーも、登録もいらない。**
+英作文の添削も、アプリが AI を直接呼ぶのではなく、「依頼文をコピー → いつもの AI に貼る → 返事を貼り戻す」で行います。
+お金のかかる API キーを用意しなくても、ふだん使っている Claude・Gemini・ChatGPT のままで使えます。
+
+**3. 「読む → 覚える → 書く」が1つのアプリでつながる。**
+読んだ章の単語と言い回しが、そのまま復習カードになります。最後にその章を英語で要約して添削してもらうと、まちがえた所も復習カードに加わります。
+
+**4. 記録はあなたのスマホの中だけ。**
+学習の記録はどこにも送られません。オフラインでも開けます。バックアップのファイルで、機種変更やパソコンとの併用もできます。
+
 ## できること
 
-- **読む** — 英文を段落ごとに表示し、「訳（直訳寄り）」「構文解説」「英単語」を必要なときだけ開く。語をタップすると意味が出る。論文の全体図で「今どこを読んでいるか」が分かる。読み上げとシャドーイングも
-- **復習** — 読んだ章の単語（英→日）と、論文や発表で使える定型表現（日→英）を間隔反復で覚える。カードには、その語が出てきた元の文が付く
-- **書く** — 読んだ章を英語で要約し、自分の AI（Claude・Gemini・ChatGPT）に添削してもらう。間違えた所は復習カードになる
-- **記録** — 学習時間の自動計測、週・月のグラフ
-- **端末の中だけで動く** — 登録・ログイン・サーバー無し。オフラインでも開ける。バックアップのファイルで、端末の引っ越しや2台（パソコンとスマホ）の記録の合わせができる
+| | ひとことで | くわしく |
+|---|---|---|
+| **読む** | 分からない所だけ、そっと開く | 英文は段落ごと。「訳（直訳寄り）」「構文解説」「単語」は閉じてあり、詰まったときだけ開けます。語をタップすると意味が出ます。論文の全体図で、今どこを読んでいるかも分かります |
+| **聞く・話す** | 読んだ英文を、耳と口でも | 読み上げ、シャドーイング、1段落のくり返し |
+| **覚える** | 論文に出た言葉を、その文ごと覚える | 単語（英→日）と、論文や発表で使える定型表現（日→英）を間隔反復で。カードには、その語が出てきた元の文が付きます |
+| **書く** | 読んだら、英語で要約して添削 | 自分の AI に添削してもらい、直した英文と訳を確認。まちがいは復習カードに |
+| **続ける** | 毎日の積み重ねが見える | 今日の復習の枚数、学習時間の自動計測、週・月のグラフ。忙しい日は「今日は新出を休む」 |
 
-## しくみ
+## はじめかた
+
+1. スマホで[アプリ](https://maitona.github.io/paper-reader-hub/)を開き、ホーム画面に追加する
+2. 「教材」→「見本で試す」で、見本の章を入れて触ってみる
+3. 自分の AI に[教材づくりプロンプト](prompts/README.md)を設定し、読みたい論文の章を教材にしてもらって取り込む
+
+くわしくは[使い方](docs/usage.md)を見てください。
+
+> **In English:** Paper Reader Hub turns the research papers you actually need to read into English-reading lessons.
+> Your own AI generates chapter data (sentences, literal translations, grammar notes, vocabulary, reusable academic phrases)
+> from a published prompt; the app imports it and handles reading, spaced repetition and summary-writing practice.
+> No API key, no server, no login: everything lives in the browser's IndexedDB, and AI feedback works by copy and paste.
+> Vanilla JS PWA, 28 jsdom tests in CI, deployed to GitHub Pages.
+
+## しくみと工夫したところ
 
 ```mermaid
 flowchart LR
@@ -102,5 +138,5 @@ HUB=$PWD/../hub/index.html sh run_all.sh   # 28 本
 
 ## 作った人
 
-電気電子工学を学ぶ学部4年生です。研究室で英語論文を読むために、自分で毎日使う道具として作りました。
+電気電子工学を学ぶ学部4年生です。研究室で英語論文を読むために、自分で毎日使う道具として作り、ほかの分野の人にも使えるように公開しました。
 コードの多くは AI（Claude）と一緒に書き、仕様と使い心地は自分で決めて確かめています。
